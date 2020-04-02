@@ -3,11 +3,12 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from deadwood_counter import DeadwoodCounter
+from deadwood_counter_dp import DeadwoodCounterDP
 
 
-def retrieve_deadwood_tests():
-    test_data_file_names = Path(__file__).parent.glob("td_*.txt")
+def retrieve_deadwood_tests(file_names=None):
+    test_data_file_names = Path(__file__).parent.glob("|".join(file_names)) if file_names else Path(
+        __file__).parent.glob("td_*.txt")
     test_data = []
     for file_name in test_data_file_names:
         with file_name.open() as file:
@@ -34,7 +35,14 @@ def retrieve_deadwood_tests():
 
 @pytest.mark.parametrize("hand,expected_deadwood", retrieve_deadwood_tests())
 def test_deadwood(hand, expected_deadwood):
-    counter = DeadwoodCounter(hand)
+    counter = DeadwoodCounterDP(hand)
+    assert counter.deadwood() == expected_deadwood
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize("hand,expected_deadwood", retrieve_deadwood_tests(["td_slowest.txt"]))
+def test_slowest(hand, expected_deadwood):
+    counter = DeadwoodCounterDP(hand)
     assert counter.deadwood() == expected_deadwood
 
 
@@ -42,4 +50,4 @@ def test_deadwood(hand, expected_deadwood):
                          zip([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10,
                                                                           10]))
 def test_deadwood_val(rank, expected_deadwood):
-    assert DeadwoodCounter.deadwood_val(rank) == expected_deadwood
+    assert DeadwoodCounterDP.deadwood_val(rank) == expected_deadwood
