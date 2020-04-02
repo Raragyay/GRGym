@@ -27,14 +27,14 @@ class Player:
     def add_card_from_discard(self, card_val: int, new_top_of_discard: int):
         self.hand.add_card(card_val)
         self.card_states[card_val] = CardState.MINE_FROM_DISCARD
-        self.update_top_of_discard(new_top_of_discard)
+        self.update_card_to_top(new_top_of_discard)
         # TODO logging if none of them are the case
 
     def report_opponent_drew_from_discard(self, card_val: int, new_top_of_discard: int):
         self.card_states[card_val] = CardState.THEIRS_FROM_DISCARD
-        self.update_top_of_discard(new_top_of_discard)
+        self.update_card_to_top(new_top_of_discard)
 
-    def update_top_of_discard(self, new_top_of_discard: int):
+    def update_card_to_top(self, new_top_of_discard: int):
         if self.card_states[new_top_of_discard] == CardState.DISCARD_THEIRS:
             self.card_states[new_top_of_discard] = CardState.DISCARD_THEIRS_TOP
         elif self.card_states[new_top_of_discard] == CardState.DISCARD_MINE:
@@ -48,3 +48,18 @@ class Player:
 
     def hand_mask(self):
         return np.copy(self.hand.cards)
+
+    def discard_card(self, card_to_discard: int, previous_top: int):
+        self.hand.remove_card(card_to_discard)
+        self.card_states[card_to_discard] = CardState.DISCARD_MINE_TOP
+        self.update_card_down(previous_top)
+
+    def update_card_down(self, previous_top_of_discard: int):
+        if self.card_states[previous_top_of_discard] == CardState.DISCARD_THEIRS_TOP:
+            self.card_states[previous_top_of_discard] = CardState.DISCARD_THEIRS
+        elif self.card_states[previous_top_of_discard] == CardState.DISCARD_MINE_TOP:
+            self.card_states[previous_top_of_discard] = CardState.DISCARD_MINE
+
+    def report_opponent_discarded(self, card_discarded, previous_top):
+        self.card_states[card_discarded] = CardState.DISCARD_THEIRS_TOP
+        self.update_card_down(previous_top)
