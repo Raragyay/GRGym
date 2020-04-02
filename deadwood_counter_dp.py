@@ -32,7 +32,6 @@ class DeadwoodCounterDP(DeadwoodCounter):
     def recurse(self) -> int:
         """
         TODO DOCUMENT
-        :param self.cards_left_list:
         :return:
         """
         cards_left_tuple = tuple(self.cards_left_list)
@@ -44,20 +43,25 @@ class DeadwoodCounterDP(DeadwoodCounter):
 
         lowest_deadwood = sys.maxsize
 
-        drop_card_lowest = self.try_to_drop_card()
-        if drop_card_lowest < lowest_deadwood:
-            lowest_deadwood = drop_card_lowest
+        build_run_lowest = self.try_to_build_run()
+        if build_run_lowest < lowest_deadwood:
+            lowest_deadwood = build_run_lowest
+        if lowest_deadwood == 0:
+            self.dp[cards_left_tuple] = lowest_deadwood
+            return lowest_deadwood
 
         build_set_lowest = self.try_to_build_set()
         if build_set_lowest < lowest_deadwood:
             lowest_deadwood = build_set_lowest
+        if lowest_deadwood == 0:
+            self.dp[cards_left_tuple] = lowest_deadwood
+            return lowest_deadwood
 
-        build_run_lowest = self.try_to_build_run()
-        if build_run_lowest < lowest_deadwood:
-            lowest_deadwood = build_run_lowest
+        drop_card_lowest = self.try_to_drop_card()
+        if drop_card_lowest < lowest_deadwood:
+            lowest_deadwood = drop_card_lowest
 
         self.dp[cards_left_tuple] = lowest_deadwood
-
         return lowest_deadwood
 
     def try_to_drop_card(self) -> int:

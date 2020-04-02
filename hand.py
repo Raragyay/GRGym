@@ -38,6 +38,10 @@ class Hand:
         card_list = self.card_list()
         out = "Hand: "
         for card_val in card_list:
-            card = divmod(card_val, 13)
-            out += f"{self.rank_symbols[card[1]]}{self.suit_symbols[card[0]]} "
+            out += f"{self.card_shorthand(card_val)} "
         return out
+
+    @classmethod
+    def card_shorthand(cls, card_val: int):
+        card = divmod(card_val, 13)
+        return f"{cls.rank_symbols[card[1]]}{cls.suit_symbols[card[0]]}"

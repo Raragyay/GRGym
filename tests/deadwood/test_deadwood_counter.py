@@ -25,6 +25,7 @@ def retrieve_deadwood_tests(file_names=None):
                 first_line = file.readline()
                 if not first_line.strip():
                     break
+                # noinspection PyTypeChecker
                 deck = np.nonzero(np.loadtxt(deck_generator(), dtype=np.bool).flatten())[0]
                 expected = int(file.readline())
                 test_id = f"{test_name}.{test_num}-{expected}"
@@ -40,14 +41,13 @@ def test_deadwood(hand, expected_deadwood):
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("hand,expected_deadwood", retrieve_deadwood_tests(["td_slowest.txt"]))
+@pytest.mark.parametrize("hand,expected_deadwood", retrieve_deadwood_tests(["slow_cases.txt"]))
 def test_slowest(hand, expected_deadwood):
     counter = DeadwoodCounterDP(hand)
     assert counter.deadwood() == expected_deadwood
 
 
 @pytest.mark.parametrize("rank,expected_deadwood",
-                         zip([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10,
-                                                                          10]))
+                         zip([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10]))
 def test_deadwood_val(rank, expected_deadwood):
     assert DeadwoodCounterDP.deadwood_val(rank) == expected_deadwood
