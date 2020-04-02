@@ -118,20 +118,3 @@ class Environment:
         observation[55] = self.draw_phase
         observation[56] = not self.draw_phase
         return observation
-
-
-if __name__ == '__main__':
-    np.random.seed(1)
-    env = Environment(Player())
-    env.reset()
-    print(env.player_1.hand.__repr__())
-    print(env.player_2.hand.__repr__())
-    fake_action = np.zeros(56)
-    print(env.player_1.has_card(2))
-    fake_action[2] = 2
-    fake_action[51] = 1
-    fake_action[52] = 1
-    env.step(fake_action)
-    print(env.player_1.hand.__repr__())
-    env.step(fake_action)
-    print(env.player_1.hand.__repr__())

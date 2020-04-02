@@ -41,9 +41,3 @@ class Hand:
             card = divmod(card_val, 13)
             out += f"{self.rank_symbols[card[1]]}{self.suit_symbols[card[0]]} "
         return out
-
-
-if __name__ == '__main__':
-    hand = Hand()
-    hand.add_card(13)
-    print(str(hand))

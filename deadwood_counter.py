@@ -135,10 +135,3 @@ class DeadwoodCounter:
         else:
             pass
         return rank + 1  # zero-indexed
-
-
-if __name__ == '__main__':
-    arr = np.arange(2)
-    print(arr)
-    c = DeadwoodCounter(arr)
-    print(c.deadwood())
