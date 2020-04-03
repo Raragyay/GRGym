@@ -4,17 +4,15 @@ from typing import Dict, Tuple
 
 import numpy as np
 
-from deadwood_counter import DeadwoodCounter
 
-
-class DeadwoodCounterDP(DeadwoodCounter):
+class DeadwoodCounter():
 
     def __init__(self, hand: np.ndarray):
         """
         Hand must be in suit then rank form, ascending order
         :param hand:
         """
-        super().__init__(hand)
+        self.hand = hand
         self.diamonds: np.ndarray = self.hand[self.hand < 13]
         self.clubs: np.ndarray = self.hand[np.logical_and(self.hand >= 13, self.hand < 26)]
         self.hearts: np.ndarray = self.hand[np.logical_and(self.hand >= 26, self.hand < 39)]
@@ -23,7 +21,7 @@ class DeadwoodCounterDP(DeadwoodCounter):
         self.suit_hands: Tuple = (self.diamonds, self.clubs, self.hearts, self.spades)
 
         self.dp: Dict[Tuple[int], int] = dict()
-        self.cards_left_list = [0 for i in range(4)]
+        self.cards_left_list = [0 for _ in range(4)]
 
     def deadwood(self) -> int:
         self.cards_left_list = [len(suit_hand) for suit_hand in self.suit_hands]
@@ -43,16 +41,16 @@ class DeadwoodCounterDP(DeadwoodCounter):
 
         lowest_deadwood = sys.maxsize
 
-        build_run_lowest = self.try_to_build_run()
-        if build_run_lowest < lowest_deadwood:
-            lowest_deadwood = build_run_lowest
+        build_set_lowest = self.try_to_build_set()
+        if build_set_lowest < lowest_deadwood:
+            lowest_deadwood = build_set_lowest
         if lowest_deadwood == 0:
             self.dp[cards_left_tuple] = lowest_deadwood
             return lowest_deadwood
 
-        build_set_lowest = self.try_to_build_set()
-        if build_set_lowest < lowest_deadwood:
-            lowest_deadwood = build_set_lowest
+        build_run_lowest = self.try_to_build_run()
+        if build_run_lowest < lowest_deadwood:
+            lowest_deadwood = build_run_lowest
         if lowest_deadwood == 0:
             self.dp[cards_left_tuple] = lowest_deadwood
             return lowest_deadwood

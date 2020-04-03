@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from deadwood_counter_dp import DeadwoodCounterDP
+from deadwood.deadwood_counter_dp import DeadwoodCounter
 
 
 def retrieve_deadwood_tests(file_names=None):
@@ -39,18 +39,18 @@ def retrieve_deadwood_tests(file_names=None):
 
 @pytest.mark.parametrize("hand,expected_deadwood", retrieve_deadwood_tests())
 def test_deadwood(hand, expected_deadwood):
-    counter = DeadwoodCounterDP(hand)
+    counter = DeadwoodCounter(hand)
     assert counter.deadwood() == expected_deadwood
 
 
 @pytest.mark.slow
 @pytest.mark.parametrize("hand,expected_deadwood", retrieve_deadwood_tests(["slow_cases.txt"]))
 def test_slowest(hand, expected_deadwood):
-    counter = DeadwoodCounterDP(hand)
+    counter = DeadwoodCounter(hand)
     assert counter.deadwood() == expected_deadwood
 
 
 @pytest.mark.parametrize("rank,expected_deadwood",
                          zip([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10]))
 def test_deadwood_val(rank, expected_deadwood):
-    assert DeadwoodCounterDP.deadwood_val(rank) == expected_deadwood
+    assert DeadwoodCounter.deadwood_val(rank) == expected_deadwood
