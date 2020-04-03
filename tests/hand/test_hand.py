@@ -8,8 +8,6 @@ from hand import Hand
 
 def generate_has_card_data():
     test_data_file_names = list(Path(__file__).parent.glob("test_has_card.*.npy"))
-    print("hi")
-    print(test_data_file_names)
     test_data = []
     for idx, file_name in enumerate(test_data_file_names):
         with file_name.open(mode="rb") as file:
@@ -46,13 +44,36 @@ def test_has_card(starting_hand: Hand, expected: np.ndarray):
     for i in range(52):
         assert starting_hand.has_card(i) == expected[i]
 
-# def test_add_card():
-#     assert False
-#
-#
-# def test_remove_card():
-#     assert False
-#
-#
-# def test_card_list():
-#     assert False
+
+def test_add_card():
+    test_hand = Hand()
+    for i in range(52):
+        assert not test_hand.has_card(i)
+        test_hand.add_card(i)
+        assert test_hand.has_card(i)
+        test_hand.add_card(i)
+        assert test_hand.has_card(i)
+    for i in range(52):
+        assert test_hand.has_card(i)
+        new_hand = Hand()
+        assert not new_hand.has_card(i)
+        new_hand.add_card(i)
+        assert new_hand.has_card(i)
+
+
+def test_remove_card():
+    test_hand = Hand()
+    for i in range(52):
+        test_hand.add_card(i)
+    for i in range(52):
+        assert test_hand.has_card(i)
+        test_hand.remove_card(i)
+        assert not test_hand.has_card(i)
+
+
+def test_card_list():
+    test_hand = Hand()
+    for i in range(52):
+        test_hand.add_card(i)
+        test_list = np.arange(i + 1)
+        np.testing.assert_array_equal(test_hand.card_list(), test_list)

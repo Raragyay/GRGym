@@ -23,7 +23,7 @@ class Hand:
     def remove_card(self, card_val: int):
         self.cards[card_val] = False
 
-    def card_list(self):
+    def card_list(self) -> np.ndarray:
         return np.nonzero(self.cards)[0]
 
     def __str__(self):

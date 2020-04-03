@@ -13,7 +13,10 @@ def retrieve_deadwood_tests(file_names=None):
     for file_name in test_data_file_names:
         with file_name.open() as file:
             first_line = ""
-            test_name = file_name.stem[3:]
+            if "td_" in file_name.stem:
+                test_name = file_name.stem[3:]
+            else:
+                test_name = file_name.stem
 
             def deck_generator():
                 yield first_line
