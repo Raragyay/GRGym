@@ -76,6 +76,8 @@ def melds_expected(file: TextIO):
             lower = int(raw_meld_split[2]) + 13 * suit
             upper = int(raw_meld_split[3]) + 13 * suit
             meld_set.add(Run(lower, upper))
+        else:
+            raise ValueError("Please provide expected melds in the correct format. ")
     return meld_set
 
 
