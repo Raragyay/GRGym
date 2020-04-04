@@ -19,8 +19,8 @@ def retrieve_deadwood_tests(expected_func: Callable, id_func: Callable,
     for file_name in test_data_file_names:
         with file_name.open() as file:
             first_line = ""
-            if "td_" in file_name.stem:
-                test_name = file_name.stem[3:]
+            if file_suffix and file_suffix in file_name.stem:
+                test_name = file_name.stem[len(file_suffix):]
             else:
                 test_name = file_name.stem
 
