@@ -6,9 +6,9 @@ import numpy as np
 import pytest
 
 from deadwood.deadwood_counter_dp import DeadwoodCounter
-from deadwood.meld import Meld
-from deadwood.run import Run
-from deadwood.set import Set
+from meld.meld import Meld
+from meld.run import Run
+from meld.set import Set
 
 
 def retrieve_deadwood_tests(expected_func: Callable, id_func: Callable,

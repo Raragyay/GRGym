@@ -1,6 +1,6 @@
 from typing import Set
 
-from deadwood.meld import Meld
+from meld.meld import Meld
 
 
 class Run(Meld):

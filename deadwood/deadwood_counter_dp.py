@@ -4,9 +4,9 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 
-from deadwood.meld import Meld
-from deadwood.run import Run
-from deadwood.set import Set
+from meld.meld import Meld
+from meld.run import Run
+from meld.set import Set
 
 
 class DeadwoodCounter:
