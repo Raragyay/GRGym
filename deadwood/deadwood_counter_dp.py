@@ -33,6 +33,14 @@ class DeadwoodCounter:
         self.cards_left_list = [len(suit_hand) for suit_hand in self.suit_hands]
         return self.recurse()[0]
 
+    def remaining_cards(self) -> Tuple[int, ...]:
+        self.cards_left_list = [len(suit_hand) for suit_hand in self.suit_hands]
+        return self.recurse()[1]
+
+    def melds(self) -> Tuple[Meld, ...]:
+        self.cards_left_list = [len(suit_hand) for suit_hand in self.suit_hands]
+        return self.recurse()[2]
+
     def recurse(self) -> Tuple[int, Tuple[int, ...], Tuple[Meld, ...]]:
         """
         TODO DOCUMENT
