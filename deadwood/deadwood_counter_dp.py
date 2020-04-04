@@ -176,5 +176,4 @@ class DeadwoodCounter:
         if rank >= 9:
             return 10
         else:
-            pass
-        return rank + 1  # zero-indexed
+            return rank + 1  # zero-indexed
