@@ -153,7 +153,7 @@ class DeadwoodCounter:
                 if prospective_deadwood < lowest_deadwood:
                     lowest_deadwood = prospective_deadwood
                     lowest_remaining_cards = prospective_remaining_cards
-                    run_start_card = self.suit_hands[suit][self.cards_left_list[suit] - 1]
+                    run_start_card = self.suit_hands[suit][self.cards_left_list[suit]]
                     lowest_melds = prospective_melds + (Run(run_start_card, run_end_card),)
             self.cards_left_list[suit] += max_run_length
         return lowest_deadwood, lowest_remaining_cards, lowest_melds

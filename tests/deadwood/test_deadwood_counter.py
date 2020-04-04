@@ -1,3 +1,4 @@
+import typing
 from pathlib import Path
 from typing import Callable, List, TextIO
 
@@ -5,6 +6,9 @@ import numpy as np
 import pytest
 
 from deadwood.deadwood_counter_dp import DeadwoodCounter
+from deadwood.meld import Meld
+from deadwood.run import Run
+from deadwood.set import Set
 
 
 def retrieve_deadwood_tests(expected_func: Callable, id_func: Callable,
@@ -51,11 +55,31 @@ def deadwood_id(test_name, test_num, expected):
     return f"{test_name}.{test_num}-{expected}"
 
 
-def deadwood_remaining_cards_expected(file):
+def remaining_cards_expected(file):
     return list(map(int, file.readline().split()))
 
 
-def deadwood_remaining_cards_id(test_name, test_num, expected):
+def remaining_cards_id(test_name, test_num, expected):
+    return f"{test_name}.{test_num}"
+
+
+def melds_expected(file: TextIO):
+    meld_set: typing.Set[Meld] = set()
+    meld_raw_arr = file.readline().split()
+    for raw_meld in meld_raw_arr:
+        if raw_meld[0] == "S":
+            rank = int(raw_meld.split("-")[1])
+            meld_set.add(Set(rank))
+        elif raw_meld[0] == "R":
+            raw_meld_split = raw_meld.split("-")
+            suit = int(raw_meld_split[1])
+            lower = int(raw_meld_split[2]) + 13 * suit
+            upper = int(raw_meld_split[3]) + 13 * suit
+            meld_set.add(Run(lower, upper))
+    return meld_set
+
+
+def melds_id(test_name, test_num, expected):
     return f"{test_name}.{test_num}"
 
 
@@ -66,12 +90,20 @@ def test_deadwood(hand: np.ndarray, expected_deadwood: int):
     assert counter.deadwood() == expected_deadwood
 
 
-@pytest.mark.parametrize("hand,expected_remaining_cards", retrieve_deadwood_tests(deadwood_remaining_cards_expected,
-                                                                                  deadwood_remaining_cards_id,
+@pytest.mark.parametrize("hand,expected_remaining_cards", retrieve_deadwood_tests(remaining_cards_expected,
+                                                                                  remaining_cards_id,
                                                                                   file_suffix="tc_"))
-def test_deadwood_remaining_cards(hand: np.ndarray, expected_remaining_cards: List[int]):
+def test_remaining_cards(hand: np.ndarray, expected_remaining_cards: List[int]):
     counter = DeadwoodCounter(hand)
     assert set(counter.remaining_cards()) == set(expected_remaining_cards)
+
+
+@pytest.mark.parametrize("hand,expected_melds", retrieve_deadwood_tests(melds_expected, melds_id, file_suffix="tm_"))
+def test_melds(hand: np.ndarray, expected_melds: List[Meld]):
+    counter = DeadwoodCounter(hand)
+    print(counter.melds())
+    print(expected_melds)
+    assert set(counter.melds()) == expected_melds
 
 
 @pytest.mark.slow
