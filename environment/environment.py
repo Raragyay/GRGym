@@ -5,7 +5,7 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 
-from agent.agent import Agent
+from agent.baseagent import BaseAgent
 from deadwood.deadwood_counter_dp import DeadwoodCounter
 from environment.action_result import ActionResult
 from environment.player import Player
@@ -16,7 +16,7 @@ from meld.set import Set
 class Environment:
     SCORE_LIMIT = 100
 
-    def __init__(self, opponent_agent: Agent):
+    def __init__(self, opponent_agent: BaseAgent):
         self.card_states = np.zeros((52,), np.int8)
         self.player_1 = Player()
         self.player_2 = Player()

@@ -1,10 +1,10 @@
 import numpy as np
 import pytest
 
-from agent.agent import Agent
+from agent.baseagent import BaseAgent
 
 
 def test_act():
-    test_agent = Agent()
+    test_agent = BaseAgent()
     with pytest.raises(NotImplementedError):
         test_agent.act(np.zeros(57))
