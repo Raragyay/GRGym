@@ -5,9 +5,9 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 
+from agent.agent import Agent
 from deadwood.deadwood_counter_dp import DeadwoodCounter
 from environment.action_result import ActionResult
-from agent.agent import Agent
 from environment.player import Player
 from meld.run import Run
 from meld.set import Set
@@ -76,10 +76,33 @@ class Environment:
         return self.build_observations(self.player_1), action_result
 
     def run_draw(self, action: np.ndarray, player: Player):
-        if action[52] >= action[53]:
+        if self.wants_to_draw_from_deck(action):
             self.draw_from_deck(player)
         else:
             self.draw_from_discard(player)
+
+    def run_discard(self, action: np.ndarray, player: Player, is_player_1: bool) -> int:
+        if self.wants_to_knock(action) and self.is_gin(player):
+            return self.score_big_gin(player)
+        card_to_discard = self.get_card_to_discard(action, player)
+        self.discard_card(player, card_to_discard)
+        if self.wants_to_knock(action) and self.can_knock(player):
+            if self.is_gin(player):
+                return self.score_gin(player)
+            else:
+                score_delta = self.try_to_knock(player)
+                if score_delta > 0:
+                    return self.update_score(player, score_delta)
+                else:
+                    # Apply negative to return  relative to current player
+                    return -self.update_score(self.opponents[player], -score_delta)
+        if not is_player_1:
+            return 0  # Avoid player 2 recursing back into player 1, want to only recurse once
+        # Run player 2 draw and discard actions
+        opponent_draw_action = self.opponent_agent.act(self.build_observations(self.player_2))
+        self.run_draw(opponent_draw_action, self.player_2)
+        opponent_discard_action = self.opponent_agent.act(self.build_observations(self.player_2))
+        return self.run_discard(opponent_discard_action, self.player_2, False)
 
     @staticmethod
     def get_card_to_discard(action: np.ndarray, player: Player):
@@ -107,12 +130,6 @@ class Environment:
         player.add_card_from_discard(drawn_card, new_top_discard)
         self.opponents[player].report_opponent_drew_from_discard(drawn_card, new_top_discard)
 
-    def discard_card(self, player: Player, card_to_discard: int):
-        previous_top = self.discard_pile[-1]
-        self.discard_pile.append(card_to_discard)
-        player.discard_card(card_to_discard, previous_top)
-        self.opponents[player].report_opponent_discarded(card_to_discard, previous_top)
-
     def build_observations(self, player: Player) -> np.ndarray:
         """
         Builds observation array.
@@ -134,6 +151,12 @@ class Environment:
         observation[55] = self.draw_phase
         observation[56] = not self.draw_phase
         return observation
+
+    def discard_card(self, player: Player, card_to_discard: int):
+        previous_top = self.discard_pile[-1]
+        self.discard_pile.append(card_to_discard)
+        player.discard_card(card_to_discard, previous_top)
+        self.opponents[player].report_opponent_discarded(card_to_discard, previous_top)
 
     def try_to_knock(self, player: Player) -> int:
         deadwood_counter = DeadwoodCounter(player.card_list())
@@ -189,41 +212,6 @@ class Environment:
         else:  # undercut
             return -25 - (knocking_player_deadwood - opponent_deadwood)
 
-    def run_discard(self, action: np.ndarray, player: Player, is_player_1: bool) -> int:  # TODO REFACTOR
-        if self.wants_to_knock(action) and self.is_gin(player):
-            return self.score_big_gin(player)
-        card_to_discard = self.get_card_to_discard(action, player)
-        self.discard_card(player, card_to_discard)
-        if self.wants_to_knock(action) and self.can_knock(player):
-            if self.is_gin(player):
-                return self.score_gin(player)
-            else:
-                score_delta = self.try_to_knock(player)
-                if score_delta > 0:
-                    return self.update_score(player, score_delta)
-                else:
-                    # Apply negative to return  relative to current player
-                    return -self.update_score(self.opponents[player], -score_delta)
-        if not is_player_1:
-            return 0  # Avoid player 2 recursing back into player 1, want to only recurse once
-        # Run player 2 draw and discard actions
-        opponent_draw_action = self.opponent_agent.act(self.build_observations(self.player_2))
-        self.run_draw(opponent_draw_action, self.player_2)
-        opponent_discard_action = self.opponent_agent.act(self.build_observations(self.player_2))
-        return self.run_discard(opponent_discard_action, self.player_2, False)
-
-    @staticmethod
-    def wants_to_knock(action):
-        return action[54] >= action[55]
-
-    @staticmethod
-    def is_gin(player: Player) -> bool:
-        return DeadwoodCounter(player.card_list()).deadwood() == 0
-
-    @staticmethod
-    def can_knock(player: Player) -> bool:
-        return DeadwoodCounter(player.card_list()).deadwood() <= 10
-
     def score_big_gin(self, player: Player) -> ActionResult:
         score_delta = DeadwoodCounter(self.opponents[player].card_list()).deadwood() + 31
         return self.update_score(player, score_delta)
@@ -238,3 +226,19 @@ class Environment:
             return ActionResult.WON_MATCH
         else:
             return ActionResult.WON_HAND
+
+    @staticmethod
+    def wants_to_draw_from_deck(action: np.ndarray) -> bool:
+        return action[52] >= action[53]
+
+    @staticmethod
+    def wants_to_knock(action: np.ndarray) -> bool:
+        return action[54] >= action[55]
+
+    @staticmethod
+    def is_gin(player: Player) -> bool:
+        return DeadwoodCounter(player.card_list()).deadwood() == 0
+
+    @staticmethod
+    def can_knock(player: Player) -> bool:
+        return DeadwoodCounter(player.card_list()).deadwood() <= 10
