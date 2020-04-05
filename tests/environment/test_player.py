@@ -80,3 +80,48 @@ def test_update_card_down():
         test_player.card_states[i] = CardState.DISCARD_THEIRS_TOP
         test_player.update_card_down(i)
         assert test_player.card_states[i] == CardState.DISCARD_THEIRS
+
+
+def test_discard_card():
+    test_player = Player()
+    test_player.card_states[0] = CardState.DISCARD_MINE_TOP
+    for i in range(1, 52):  # Use 0 as the initial discard card
+        test_player.add_card_from_deck(i)
+    for i in range(1, 52):
+        test_player.discard_card(i, i - 1)
+        assert test_player.card_states[i] == CardState.DISCARD_MINE_TOP
+        assert test_player.card_states[i - 1] == CardState.DISCARD_MINE
+        assert not test_player.has_card(i)
+
+
+def test_report_opponent_discarded():
+    test_player = Player()
+    test_player.card_states[0] = CardState.DISCARD_THEIRS_TOP
+    for i in range(1, 52):
+        test_player.report_opponent_discarded(i, i - 1)
+        assert test_player.card_states[i] == CardState.DISCARD_THEIRS_TOP
+        assert test_player.card_states[i - 1] == CardState.DISCARD_THEIRS
+
+
+def test_add_card_from_discard():
+    test_player = Player()
+    test_player.card_states.fill(CardState.DISCARD_MINE)
+    test_player.card_states[51] = CardState.DISCARD_MINE_TOP
+    for i in range(51, 1, -1):
+        test_player.add_card_from_discard(i, i - 1)
+        assert test_player.card_states[i] == CardState.MINE_FROM_DISCARD
+        assert test_player.card_states[i - 1] == CardState.DISCARD_MINE_TOP
+        assert test_player.card_states[i - 2] == CardState.DISCARD_MINE
+        assert test_player.has_card(i)
+
+
+def test_report_opponent_drew_from_discard():
+    test_player = Player()
+    test_player.card_states.fill(CardState.DISCARD_MINE)
+    test_player.card_states[51] = CardState.DISCARD_MINE_TOP
+    for i in range(51, 1, -1):
+        test_player.report_opponent_drew_from_discard(i, i - 1)
+        assert test_player.card_states[i] == CardState.THEIRS_FROM_DISCARD
+        assert test_player.card_states[i - 1] == CardState.DISCARD_MINE_TOP
+        assert test_player.card_states[i - 2] == CardState.DISCARD_MINE
+        assert not test_player.has_card(i)
