@@ -103,20 +103,27 @@ def test_remaining_cards(hand: np.ndarray, expected_remaining_cards: List[int]):
 @pytest.mark.parametrize("hand,expected_melds", retrieve_deadwood_tests(melds_expected, melds_id, file_suffix="tm_"))
 def test_melds(hand: np.ndarray, expected_melds: List[Meld]):
     counter = DeadwoodCounter(hand)
-    print(counter.melds())
-    print(expected_melds)
     assert set(counter.melds()) == expected_melds
 
 
 @pytest.mark.slow
 @pytest.mark.parametrize("hand,expected_deadwood", retrieve_deadwood_tests(deadwood_expected,
-                                                                           deadwood_id, file_names=["slow_cases.txt"]))
-def test_slowest(hand, expected_deadwood):
+                                                                           deadwood_id,
+                                                                           file_names=["slow_cases_td.txt"]))
+def test_slowest_deadwood(hand: np.ndarray, expected_deadwood: int):
     counter = DeadwoodCounter(hand)
     assert counter.deadwood() == expected_deadwood
 
 
+@pytest.mark.slow
+@pytest.mark.parametrize("hand,expected_melds", retrieve_deadwood_tests(melds_expected,
+                                                                        melds_id, file_names=["slow_cases_tm.txt"]))
+def test_slowest_deadwood(hand: np.ndarray, expected_melds: List[Meld]):
+    counter = DeadwoodCounter(hand)
+    assert set(counter.melds()) == expected_melds
+
+
 @pytest.mark.parametrize("rank,expected_deadwood",
                          zip([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10]))
-def test_deadwood_val(rank, expected_deadwood):
+def test_deadwood_val(rank: int, expected_deadwood: int):
     assert DeadwoodCounter.deadwood_val(rank) == expected_deadwood
