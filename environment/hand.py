@@ -1,6 +1,6 @@
 import numpy as np
 
-from card_enums import Rank, Suit
+from environment.card_enums import Rank, Suit
 
 
 class Hand:

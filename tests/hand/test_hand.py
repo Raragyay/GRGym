@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from hand import Hand
+from environment.hand import Hand
 
 
 def generate_has_card_data():

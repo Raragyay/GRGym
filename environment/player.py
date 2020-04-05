@@ -1,7 +1,7 @@
 import numpy as np
 
-from card_state import CardState
-from hand import Hand
+from environment.card_state import CardState
+from environment.hand import Hand
 
 
 class Player:
@@ -13,7 +13,6 @@ class Player:
     def reset(self):
         self.hand = Hand()
         self.card_states = np.zeros(52)
-        self.score = 0
 
     def add_card_from_deck(self, card_val: int):
         self.hand.add_card(card_val)
