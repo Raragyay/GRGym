@@ -33,7 +33,7 @@ class Player:
         self.card_states[card_to_discard] = CardState.DISCARD_MINE_TOP
         self.update_card_down(previous_top)
 
-    def report_opponent_discarded(self, card_discarded, previous_top):
+    def report_opponent_discarded(self, card_discarded: int, previous_top: int):
         self.card_states[card_discarded] = CardState.DISCARD_THEIRS_TOP
         self.update_card_down(previous_top)
 
