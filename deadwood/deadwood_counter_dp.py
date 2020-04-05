@@ -10,11 +10,19 @@ from meld.set import Set
 
 
 class DeadwoodCounter:
+    """
+    DeadwoodCounter(hand: np.ndarray)
+
+    :param hand: A numpy array of the cards in the hand sorted in ascending order.  e.g. [2 25 36 47]
+
+    Compiles the deadwood value for the given hand, the best set of melds, and the deadwood cards.
+    """
 
     def __init__(self, hand: np.ndarray):
         """
         Hand must be in suit then rank form, ascending order
-        :param hand:
+
+        :param hand: A numpy array of the cards in the hand sorted in ascending order.  e.g. [2 25 36 47]
         """
         self.hand = hand
         self.diamonds: np.ndarray = self.hand[self.hand < 13]
