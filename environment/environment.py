@@ -7,7 +7,7 @@ import numpy as np
 
 from deadwood.deadwood_counter_dp import DeadwoodCounter
 from environment.action_result import ActionResult
-from environment.agent import Agent
+from agent.agent import Agent
 from environment.player import Player
 from meld.run import Run
 from meld.set import Set

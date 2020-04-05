@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from environment.agent import Agent
+from agent.agent import Agent
 
 
 def test_act():
