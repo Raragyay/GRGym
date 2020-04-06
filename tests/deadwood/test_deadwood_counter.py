@@ -118,7 +118,7 @@ def test_slowest_deadwood(hand: np.ndarray, expected_deadwood: int):
 @pytest.mark.slow
 @pytest.mark.parametrize("hand,expected_melds", retrieve_deadwood_tests(melds_expected,
                                                                         melds_id, file_names=["slow_cases_tm.txt"]))
-def test_slowest_deadwood(hand: np.ndarray, expected_melds: List[Meld]):
+def test_slowest_meld(hand: np.ndarray, expected_melds: List[Meld]):
     counter = DeadwoodCounter(hand)
     assert set(counter.melds()) == expected_melds
 
