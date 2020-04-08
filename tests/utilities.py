@@ -1,6 +1,6 @@
 import itertools
 from pathlib import Path
-from typing import Any, Callable, Iterator, List, TextIO, Tuple
+from typing import Any, Callable, Iterator, List, Tuple
 
 import numpy as np
 import pytest
@@ -20,11 +20,12 @@ def retrieve_file_tests(
     test_data = []
     test_num = itertools.count(1)
     for file_path in test_data_file_names:
+        test_name = file_path.stem
         for X, y in retrieve_x_y(file_path):
             processed_X = input_func(X)
             processed_y = expected_func(y)
             test_data.append(
-                pytest.param(processed_X, processed_y, id=id_func(processed_X, processed_y, next(test_num))))
+                pytest.param(processed_X, processed_y, id=id_func(test_name, processed_y, next(test_num))))
     return test_data
 
 
@@ -34,49 +35,43 @@ def retrieve_x_y(file_path: Path) -> Iterator[Tuple[str, str]]:
 
 
 def retrieve_raw_test_data(file_path: Path) -> Iterator[str]:
-    TEST_DATA_ENDING = "==END TEST=="
-    return map(lambda s: s[:-1], file_path.open().read().split(TEST_DATA_ENDING)[:-1])  # Last item is empty
+    TEST_DATA_ENDING = "\n==END TEST==\n"
+    return file_path.open().read().split(TEST_DATA_ENDING)[:-1]  # Last item is empty
 
 
-if __name__ == '__main__':
-    test_data_file_names = Path(__file__).parent.glob("|".join(["deadwood/tm_any.txt"]))
-    for file_name in test_data_file_names:
-        print(list(retrieve_raw_test_data(file_name)))
+def retrieve_int_vector(string: str) -> np.ndarray:
+    return np.fromstring(string, sep=" ")
 
 
-def retrieve_int_vector(string: str):
-    return np.fromstring(string, np.int8, sep=" ")
-
-
-def retrieve_boolean(file: TextIO):
-    s = file.readline().strip()
-    if s == "Y":
+def retrieve_boolean(string: str) -> bool:
+    if string == "Y":
         return True
-    elif s == "N":
+    elif string == "N":
         return False
     else:
-        raise ValueError(f"Invalid can_knock value: {s}")
+        raise ValueError(f"Invalid boolean value: {string}")
 
 
-def nonzero_indices(string: str):
-    return convert_matrix(string).flatten().nonzero()[0]
+def retrieve_nonzero_indices(string: str) -> np.ndarray:
+    return convert_int_matrix(string).flatten().nonzero()[0]
 
 
-def convert_matrix(string: str):
-    return np.fromstring(string, np.int8, sep=' ')
+def convert_int_matrix(string: str) -> np.ndarray:
+    # noinspection PyTypeChecker
+    return np.loadtxt(iter(string.split('\n')), dtype=np.int8, delimiter=' ')
 
 
-def single_int(string: str):
+def retrieve_single_int(string: str) -> int:
     return int(string)
 
 
-def idfn_id_expected(test_name, test_id, expected):
+def idfn_id_expected(file_name, expected, test_id):
     return f"{test_id}-{expected}"
 
 
-def idfn_name_id(test_name, test_id, expected):
-    return f"{test_name}.{test_id}"
+def idfn_name_id(file_name, expected, test_id):
+    return f"{file_name}.{test_id}"
 
 
-def idfn_name_id_expected(test_name, test_num, expected):
-    return f"{test_name}.{test_num}-{expected}"
+def idfn_name_id_expected(file_name, expected, test_num):
+    return f"{file_name}.{test_num}-{expected}"
