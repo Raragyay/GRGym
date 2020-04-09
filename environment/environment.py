@@ -4,8 +4,8 @@ from copy import deepcopy
 from typing import Dict, List, Tuple
 
 import numpy as np
-from agent.baseagent import BaseAgent
 
+from agent.base_agent import BaseAgent
 from deadwood.deadwood_counter_dp import DeadwoodCounter
 from environment.action_result import ActionResult
 from environment.player import Player
