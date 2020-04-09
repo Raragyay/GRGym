@@ -4,8 +4,8 @@ from copy import deepcopy
 from typing import Dict, List, Tuple
 
 import numpy as np
-
 from agent.baseagent import BaseAgent
+
 from deadwood.deadwood_counter_dp import DeadwoodCounter
 from environment.action_result import ActionResult
 from environment.player import Player
@@ -48,7 +48,7 @@ class Environment:
         self.draw_phase = True
         return self.build_observations(self.player_1)
 
-    def step(self, action: np.ndarray) -> Tuple[np.ndarray, int]:
+    def step(self, action: np.ndarray) -> Tuple[np.ndarray, int]:  # TODO EMPTY DECK
         """
         Step through one interaction with the environment.
 
