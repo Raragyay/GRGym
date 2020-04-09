@@ -1,10 +1,11 @@
 import numpy as np
 import pytest
-from agent.baseagent import BaseAgent
 
+from agent.base_agent import BaseAgent
 from environment.environment import Environment
 from environment.player import Player
-from tests.utilities import idfn_id_expected, retrieve_boolean, retrieve_file_tests, retrieve_nonzero_indices
+from tests.utilities import idfn_id_expected, retrieve_boolean, retrieve_file_tests, retrieve_float_vector, \
+    retrieve_nonzero_indices
 
 
 @pytest.fixture
@@ -37,11 +38,13 @@ def test_can_knock(test_env: Environment, player_with_cards, cards_in_hand: list
 
 @pytest.mark.parametrize("cards_in_hand,expected", retrieve_file_tests(retrieve_nonzero_indices, retrieve_boolean,
                                                                        idfn_id_expected,
-                                                                       file_names=["environment/is_gin.txt"]))
+                                                                       file_names=["environment/is_gin_cases.txt"]))
 def test_is_gin(test_env: Environment, player_with_cards, cards_in_hand: list, expected: bool):
     assert test_env.is_gin(player_with_cards(cards_in_hand)) == expected
 
 
-@pytest.mark.parametrize("actions,expected", [(np.zeros(56), True)])
+@pytest.mark.parametrize("actions,expected", retrieve_file_tests(retrieve_float_vector, retrieve_boolean,
+                                                                 idfn_id_expected,
+                                                                 file_names=["environment/wants_to_knock_cases.txt"]))
 def test_wants_to_knock(test_env: Environment, actions: np.ndarray, expected: bool):
     assert test_env.wants_to_knock(actions) == expected

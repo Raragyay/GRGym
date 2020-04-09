@@ -35,12 +35,20 @@ def retrieve_x_y(file_path: Path) -> Iterator[Tuple[str, str]]:
 
 
 def retrieve_raw_test_data(file_path: Path) -> Iterator[str]:
-    TEST_DATA_ENDING = "\n==END TEST==\n"
+    TEST_DATA_ENDING = "\n==END TEST=="
     return file_path.open().read().split(TEST_DATA_ENDING)[:-1]  # Last item is empty
 
 
 def retrieve_int_vector(string: str) -> np.ndarray:
-    return np.fromstring(string, sep=" ")
+    return retrieve_vector(string, np.int)
+
+
+def retrieve_float_vector(string: str) -> np.ndarray:
+    return retrieve_vector(string, np.float)
+
+
+def retrieve_vector(string: str, data_type: type = None):
+    return np.fromstring(string, sep=" ", dtype=data_type)
 
 
 def retrieve_boolean(string: str) -> bool:
