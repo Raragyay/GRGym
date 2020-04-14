@@ -8,7 +8,15 @@ class Player:
     def __init__(self):
         self.hand = Hand()
         self.card_states = np.zeros(52)
-        self.score = 0
+        self._score = 0
+
+    @property
+    def score(self):
+        return self._score
+
+    @score.setter
+    def score(self, new_score):
+        self._score = new_score
 
     def reset(self):
         self.hand = Hand()

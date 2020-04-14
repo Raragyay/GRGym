@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from agent.base_agent import BaseAgent
+from environment.action_result import ActionResult
 from environment.environment import Environment
 from environment.player import Player
 from tests.utilities import idfn_id_expected, retrieve_boolean, retrieve_file_tests, retrieve_float_vector, \
@@ -48,3 +49,17 @@ def test_is_gin(test_env: Environment, player_with_cards, cards_in_hand: list, e
                                                                  file_names=["environment/wants_to_knock_cases.txt"]))
 def test_wants_to_knock(test_env: Environment, actions: np.ndarray, expected: bool):
     assert test_env.wants_to_knock(actions) == expected
+
+
+def test_update_score(test_env: Environment, base_player: Player):
+    score_limit = 100
+    test_env.SCORE_LIMIT = score_limit
+    assert test_env.update_score(base_player, score_limit // 2) == ActionResult.WON_HAND
+    assert test_env.update_score(base_player, score_limit) == ActionResult.WON_MATCH
+    assert base_player.score >= score_limit
+    base_player.score = 0
+    assert test_env.update_score(base_player, score_limit == ActionResult.WON_MATCH)
+
+
+def test_score_gin(test_env: Environment, player_with_cards):
+    pass
