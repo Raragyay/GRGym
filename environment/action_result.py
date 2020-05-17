@@ -7,3 +7,5 @@ class ActionResult(IntEnum):
     NO_CHANGE = 0
     WON_HAND = 1
     WON_MATCH = 2
+
+    DRAW = 101

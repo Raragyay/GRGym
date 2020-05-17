@@ -8,15 +8,15 @@ class Player:
     def __init__(self):
         self.hand = Hand()
         self.card_states = np.zeros(52)
-        self._score = 0
+        self.__score = 0
 
     @property
     def score(self):
-        return self._score
+        return self.__score
 
     @score.setter
     def score(self, new_score):
-        self._score = new_score
+        self.__score = new_score
 
     def reset(self):
         self.hand = Hand()
@@ -45,12 +45,16 @@ class Player:
         self.update_card_down(previous_top)
 
     def update_card_to_top(self, new_top_of_discard: int):
+        if new_top_of_discard is None:
+            return
         if self.card_states[new_top_of_discard] == CardState.DISCARD_THEIRS:
             self.card_states[new_top_of_discard] = CardState.DISCARD_THEIRS_TOP
         elif self.card_states[new_top_of_discard] == CardState.DISCARD_MINE:
             self.card_states[new_top_of_discard] = CardState.DISCARD_MINE_TOP
 
     def update_card_down(self, previous_top_of_discard: int):
+        if previous_top_of_discard is None:
+            return
         if self.card_states[previous_top_of_discard] == CardState.DISCARD_THEIRS_TOP:
             self.card_states[previous_top_of_discard] = CardState.DISCARD_THEIRS
         elif self.card_states[previous_top_of_discard] == CardState.DISCARD_MINE_TOP:
@@ -71,3 +75,11 @@ class Player:
                    other.score
         else:
             return False
+
+    def __repr__(self):
+        return f'Player: {self.hand.__repr__()} | {self.score} | {self.card_states}'
+
+    def __str__(self):
+        return f'Player:\n' \
+               f'Hand: {self.hand}\n' \
+               f'Score: {self.score}'

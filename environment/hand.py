@@ -8,7 +8,7 @@ class Hand:
     A representation of the cards in a hand. Stored in a boolean array.
     Ordered by Suit, then by Rank. For example, Ace of Clubs is the 14th card (in position 13)
     """
-    suit_symbols = ['♦', '♣', '♥', '♠']
+    suit_symbols = ['D', 'C', 'H', 'S']
     rank_symbols = ['A', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K']
 
     def __init__(self):

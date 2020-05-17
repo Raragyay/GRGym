@@ -47,7 +47,7 @@ def retrieve_float_vector(string: str) -> np.ndarray:
     return retrieve_vector(string, np.float)
 
 
-def retrieve_vector(string: str, data_type: type = None):
+def retrieve_vector(string: str, data_type: type = None) -> np.ndarray:
     return np.fromstring(string, sep=" ", dtype=data_type)
 
 

@@ -43,10 +43,12 @@ class Environment:
 
         self.draw_from_deck(self.player_1, 10)
         self.draw_from_deck(self.player_2, 10)
+        self.add_first_discard_card()
         self.draw_phase = True
         return self.build_observations(self.player_1)
 
-    def step(self, action: np.ndarray) -> Tuple[np.ndarray, int]:  # TODO EMPTY DECK
+    def step(self, action: np.ndarray) -> Tuple[np.ndarray, int]:
+        # TODO FIRST CARD PRIVILEGE
         """
         Step through one interaction with the environment.
 
@@ -63,9 +65,8 @@ class Environment:
         If they lost the hand, this is set to -1. If they lost the match, this is set to -2.
         Otherwise, this is set to 0.
         """
-        action_result = 0
         if self.draw_phase:
-            self.run_draw(action, self.player_1)
+            action_result = self.run_draw(action, self.player_1)
         else:  # Discard phase
             action_result = self.run_discard(action, self.player_1, is_player_1=True)
         self.draw_phase = not self.draw_phase
@@ -74,10 +75,13 @@ class Environment:
         return self.build_observations(self.player_1), action_result
 
     def run_draw(self, action: np.ndarray, player: Player):
-        if self.wants_to_draw_from_deck(action):
+        if len(self.deck) == 2:
+            return ActionResult.DRAW
+        if self.wants_to_draw_from_deck(action) or self.discard_pile_is_empty():
             self.draw_from_deck(player)
         else:
             self.draw_from_discard(player)
+        return 0
 
     def run_discard(self, action: np.ndarray, player: Player, is_player_1: bool) -> int:
         if self.wants_to_knock(action) and self.is_gin(player):
@@ -124,7 +128,7 @@ class Environment:
 
     def draw_from_discard(self, player: Player):
         drawn_card: int = self.discard_pile.pop()
-        new_top_discard: int = self.discard_pile[-1]
+        new_top_discard: int = None if self.discard_pile_is_empty() else self.discard_pile[-1]
         player.add_card_from_discard(drawn_card, new_top_discard)
         self.opponents(player).report_opponent_drew_from_discard(drawn_card, new_top_discard)
 
@@ -151,7 +155,7 @@ class Environment:
         return observation
 
     def discard_card(self, player: Player, card_to_discard: int):
-        previous_top = self.discard_pile[-1]
+        previous_top = None if self.discard_pile_is_empty() else self.discard_pile[-1]
         self.discard_pile.append(card_to_discard)
         player.discard_card(card_to_discard, previous_top)
         self.opponents(player).report_opponent_discarded(card_to_discard, previous_top)
@@ -253,3 +257,18 @@ class Environment:
             return self.player_1
         else:
             raise ValueError('This player is not currently in the environment.')
+
+    def __repr__(self):
+        return f'{self.player_1.__repr__()}\n' \
+               f'{self.player_2.__repr__()}\n' \
+               f'Opponent Agent: {self.opponent_agent.__class__}\n' \
+               f'Deck: {self.deck}\n' \
+               f'Discard: {self.discard_pile}\n' \
+               f'{"Draw" if self.draw_phase else "Discard"} Phase\n'
+
+    def discard_pile_is_empty(self) -> bool:
+        return len(self.discard_pile) == 0
+
+    def add_first_discard_card(self):
+        self.discard_pile.append(self.deck[0])
+        self.deck = self.deck[1:]
