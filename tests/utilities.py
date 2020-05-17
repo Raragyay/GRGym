@@ -69,7 +69,7 @@ def convert_int_matrix(string: str) -> np.ndarray:
     return np.loadtxt(iter(string.split('\n')), dtype=np.int8, delimiter=' ')
 
 
-def retrieve_single_int(string: str) -> int:
+def retrieve_int(string: str) -> int:
     return int(string)
 
 

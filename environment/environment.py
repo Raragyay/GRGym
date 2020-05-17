@@ -15,6 +15,8 @@ from meld.set import Set
 
 class Environment:
     SCORE_LIMIT = 100
+    GIN_BONUS = 25
+    BIG_GIN_BONUS = 31
 
     def __init__(self, opponent_agent: BaseAgent):
         self.card_states = np.zeros((52,), np.int8)
@@ -23,10 +25,6 @@ class Environment:
         self.opponent_agent = opponent_agent
         self.deck = np.arange(52)
         self.discard_pile: List[int] = []
-
-        self.opponents: Dict[Player, Player] = {
-            self.player_1: self.player_2,
-            self.player_2: self.player_1}
 
         self.draw_phase = True  # Either draw phase or discard phase
 
@@ -95,7 +93,7 @@ class Environment:
                     return self.update_score(player, score_delta)
                 else:
                     # Apply negative to return  relative to current player
-                    return -self.update_score(self.opponents[player], -score_delta)
+                    return -self.update_score(self.opponents(player), -score_delta)
         if not is_player_1:
             return 0  # Avoid player 2 recursing back into player 1, want to only recurse once
         # Run player 2 draw and discard actions
@@ -117,7 +115,7 @@ class Environment:
         return card_to_discard
 
     def draw_from_deck(self, player: Player, num_of_cards: int = 1):
-        assert player in self.opponents
+        assert self.opponents(player)
         assert len(self.deck) >= num_of_cards
         for card_val in self.deck[:num_of_cards]:
             player.add_card_from_deck(card_val)
@@ -128,7 +126,7 @@ class Environment:
         drawn_card: int = self.discard_pile.pop()
         new_top_discard: int = self.discard_pile[-1]
         player.add_card_from_discard(drawn_card, new_top_discard)
-        self.opponents[player].report_opponent_drew_from_discard(drawn_card, new_top_discard)
+        self.opponents(player).report_opponent_drew_from_discard(drawn_card, new_top_discard)
 
     def build_observations(self, player: Player) -> np.ndarray:
         """
@@ -146,7 +144,7 @@ class Environment:
         observation: np.ndarray = np.empty(57, np.int8)
         observation[0:52] = player.card_states
         observation[52] = player.score
-        observation[53] = self.opponents[player].score
+        observation[53] = self.opponents(player).score
         observation[54] = len(self.deck)
         observation[55] = self.draw_phase
         observation[56] = not self.draw_phase
@@ -156,13 +154,13 @@ class Environment:
         previous_top = self.discard_pile[-1]
         self.discard_pile.append(card_to_discard)
         player.discard_card(card_to_discard, previous_top)
-        self.opponents[player].report_opponent_discarded(card_to_discard, previous_top)
+        self.opponents(player).report_opponent_discarded(card_to_discard, previous_top)
 
     def try_to_knock(self, player: Player) -> int:
         deadwood_counter = DeadwoodCounter(player.card_list())
         knocking_player_deadwood = deadwood_counter.deadwood()
         knocking_player_melds = deadwood_counter.melds()
-        deadwood_counter = DeadwoodCounter(self.opponents[player].card_list())
+        deadwood_counter = DeadwoodCounter(self.opponents(player).card_list())
         opponent_deadwood = deadwood_counter.deadwood()
         opponent_remaining_cards = set(deadwood_counter.remaining_cards())
 
@@ -213,11 +211,11 @@ class Environment:
             return -25 - (knocking_player_deadwood - opponent_deadwood)
 
     def score_big_gin(self, player: Player) -> ActionResult:
-        score_delta = DeadwoodCounter(self.opponents[player].card_list()).deadwood() + 31
+        score_delta = DeadwoodCounter(self.opponents(player).card_list()).deadwood() + self.BIG_GIN_BONUS
         return self.update_score(player, score_delta)
 
     def score_gin(self, player):
-        score_delta = DeadwoodCounter(self.opponents[player].card_list()).deadwood() + 25
+        score_delta = DeadwoodCounter(self.opponents(player).card_list()).deadwood() + self.GIN_BONUS
         return self.update_score(player, score_delta)
 
     def update_score(self, player: Player, score_delta: int) -> ActionResult:
@@ -242,3 +240,16 @@ class Environment:
     @staticmethod
     def can_knock(player: Player) -> bool:
         return DeadwoodCounter(player.card_list()).deadwood() <= 10
+
+    def opponents(self, player: Player):
+        """
+        Opponents is implemented as a function instead of a dictionary to allow for swapping of players.
+        :param player:
+        :return:
+        """
+        if player == self.player_1:
+            return self.player_2
+        elif player == self.player_2:
+            return self.player_1
+        else:
+            raise ValueError('This player is not currently in the environment.')

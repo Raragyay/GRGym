@@ -1,3 +1,5 @@
+from typing import Callable
+
 import numpy as np
 import pytest
 
@@ -6,7 +8,7 @@ from environment.action_result import ActionResult
 from environment.environment import Environment
 from environment.player import Player
 from tests.utilities import idfn_id_expected, retrieve_boolean, retrieve_file_tests, retrieve_float_vector, \
-    retrieve_nonzero_indices
+    retrieve_int, retrieve_nonzero_indices
 
 
 @pytest.fixture
@@ -33,14 +35,16 @@ def player_with_cards(base_player: Player):
 @pytest.mark.parametrize("cards_in_hand,expected", retrieve_file_tests(retrieve_nonzero_indices, retrieve_boolean,
                                                                        idfn_id_expected,
                                                                        file_names=["environment/can_knock_cases.txt"]))
-def test_can_knock(test_env: Environment, player_with_cards, cards_in_hand: list, expected: bool):
+def test_can_knock(test_env: Environment, player_with_cards: Callable[[np.ndarray], Player], cards_in_hand: np.ndarray,
+                   expected: bool):
     assert test_env.can_knock(player_with_cards(cards_in_hand)) == expected
 
 
 @pytest.mark.parametrize("cards_in_hand,expected", retrieve_file_tests(retrieve_nonzero_indices, retrieve_boolean,
                                                                        idfn_id_expected,
                                                                        file_names=["environment/is_gin_cases.txt"]))
-def test_is_gin(test_env: Environment, player_with_cards, cards_in_hand: list, expected: bool):
+def test_is_gin(test_env: Environment, player_with_cards: Callable[[np.ndarray], Player], cards_in_hand: np.ndarray,
+                expected: bool):
     assert test_env.is_gin(player_with_cards(cards_in_hand)) == expected
 
 
@@ -61,5 +65,14 @@ def test_update_score(test_env: Environment, base_player: Player):
     assert test_env.update_score(base_player, score_limit == ActionResult.WON_MATCH)
 
 
-def test_score_gin(test_env: Environment, player_with_cards):
-    pass
+@pytest.mark.parametrize("cards_in_hand,deadwood", retrieve_file_tests(retrieve_nonzero_indices, retrieve_int,
+                                                                       idfn_id_expected,
+                                                                       file_names=["deadwood/td_10.txt"]))
+def test_score_gin(test_env: Environment, base_player: Player, player_with_cards: Callable[[np.ndarray], Player],
+                   cards_in_hand: np.ndarray, deadwood: int):
+    test_env.player_1 = base_player
+    test_env.player_2 = player_with_cards(cards_in_hand)
+    base_player.score = test_env.SCORE_LIMIT - test_env.GIN_BONUS - deadwood
+    assert test_env.score_gin(base_player) == ActionResult.WON_MATCH
+    base_player.score = test_env.SCORE_LIMIT - test_env.GIN_BONUS - deadwood - 1
+    assert test_env.score_gin(base_player) == ActionResult.WON_HAND
