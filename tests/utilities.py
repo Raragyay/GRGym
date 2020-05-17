@@ -9,7 +9,7 @@ import pytest
 def retrieve_file_tests(
         input_func: Callable[[str], Any] = lambda f: f,
         expected_func: Callable[[str], Any] = lambda f: f,
-        id_func: Callable[[str, int, Any], str] = lambda name, id, exoected: id,
+        id_func: Callable[[str, int, Any], str] = lambda name, expected, test_id: test_id,
         file_suffix: str = None, file_names: List[str] = None) -> List[pytest.param]:
     if file_names:
         test_data_file_names = Path(__file__).parent.glob("|".join(file_names))

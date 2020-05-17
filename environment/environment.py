@@ -241,7 +241,7 @@ class Environment:
     def can_knock(player: Player) -> bool:
         return DeadwoodCounter(player.card_list()).deadwood() <= 10
 
-    def opponents(self, player: Player):
+    def opponents(self, player: Player) -> Player:
         """
         Opponents is implemented as a function instead of a dictionary to allow for swapping of players.
         :param player:
