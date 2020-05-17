@@ -6,7 +6,7 @@ from typing import Dict, List, Tuple
 import numpy as np
 
 from agent.base_agent import BaseAgent
-from deadwood.deadwood_counter_dp import DeadwoodCounter
+from deadwood.deadwood_counter_dp import DeadwoodCounterDP
 from environment.action_result import ActionResult
 from environment.player import Player
 from meld.run import Run
@@ -161,10 +161,10 @@ class Environment:
         self.opponents(player).report_opponent_discarded(card_to_discard, previous_top)
 
     def try_to_knock(self, player: Player) -> int:
-        deadwood_counter = DeadwoodCounter(player.card_list())
+        deadwood_counter = DeadwoodCounterDP(player.card_list())
         knocking_player_deadwood = deadwood_counter.deadwood()
         knocking_player_melds = deadwood_counter.melds()
-        deadwood_counter = DeadwoodCounter(self.opponents(player).card_list())
+        deadwood_counter = DeadwoodCounterDP(self.opponents(player).card_list())
         opponent_deadwood = deadwood_counter.deadwood()
         opponent_remaining_cards = set(deadwood_counter.remaining_cards())
 
@@ -194,7 +194,7 @@ class Environment:
                     logging.error(f"Card {card} was inserted into connectable_remaining_cards, but it is not an "
                                   f"extension of any run. ")
                 opponent_remaining_cards.remove(card)
-                opponent_deadwood -= DeadwoodCounter.deadwood_val(card)
+                opponent_deadwood -= DeadwoodCounterDP.deadwood_val(card)
 
         # try to layoff into sets
         set_melds: typing.Set[Set] = {deepcopy(meld) for meld in knocking_player_melds if isinstance(meld, Set)}
@@ -206,7 +206,7 @@ class Environment:
                 break
             for card in connectable_remaining_cards:
                 opponent_remaining_cards.remove(card)
-                opponent_deadwood -= DeadwoodCounter.deadwood_val(card)
+                opponent_deadwood -= DeadwoodCounterDP.deadwood_val(card)
 
         # Check score difference
         if knocking_player_deadwood < opponent_deadwood:  # won hand
@@ -215,11 +215,11 @@ class Environment:
             return -25 - (knocking_player_deadwood - opponent_deadwood)
 
     def score_big_gin(self, player: Player) -> ActionResult:
-        score_delta = DeadwoodCounter(self.opponents(player).card_list()).deadwood() + self.BIG_GIN_BONUS
+        score_delta = DeadwoodCounterDP(self.opponents(player).card_list()).deadwood() + self.BIG_GIN_BONUS
         return self.update_score(player, score_delta)
 
     def score_gin(self, player):
-        score_delta = DeadwoodCounter(self.opponents(player).card_list()).deadwood() + self.GIN_BONUS
+        score_delta = DeadwoodCounterDP(self.opponents(player).card_list()).deadwood() + self.GIN_BONUS
         return self.update_score(player, score_delta)
 
     def update_score(self, player: Player, score_delta: int) -> ActionResult:
@@ -239,11 +239,11 @@ class Environment:
 
     @staticmethod
     def is_gin(player: Player) -> bool:
-        return DeadwoodCounter(player.card_list()).deadwood() == 0
+        return DeadwoodCounterDP(player.card_list()).deadwood() == 0
 
     @staticmethod
     def can_knock(player: Player) -> bool:
-        return DeadwoodCounter(player.card_list()).deadwood() <= 10
+        return DeadwoodCounterDP(player.card_list()).deadwood() <= 10
 
     def opponents(self, player: Player) -> Player:
         """

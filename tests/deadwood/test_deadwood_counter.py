@@ -3,13 +3,18 @@ import typing
 import numpy as np
 import pytest
 
-from deadwood.deadwood_counter_dp import DeadwoodCounter
+from deadwood.deadwood_counter_dp import DeadwoodCounterDP
 from meld.meld import Meld
 from meld.run import Run
 from meld.set import Set
 from tests.utilities import idfn_name_id, idfn_name_id_expected, retrieve_file_tests, retrieve_int, \
     retrieve_int_vector, \
     retrieve_nonzero_indices
+
+
+@pytest.fixture
+def deadwood_counter():
+    return DeadwoodCounterDP
 
 
 def melds_expected(string: str):
@@ -35,7 +40,7 @@ def melds_expected(string: str):
                          retrieve_file_tests(retrieve_nonzero_indices, retrieve_int, idfn_name_id_expected,
                                              file_suffix="deadwood/td_"))
 def test_deadwood(hand: np.ndarray, expected_deadwood: int):
-    counter = DeadwoodCounter(hand)
+    counter = DeadwoodCounterDP(hand)
     assert counter.deadwood() == expected_deadwood
 
 
@@ -43,7 +48,7 @@ def test_deadwood(hand: np.ndarray, expected_deadwood: int):
                          retrieve_file_tests(retrieve_nonzero_indices, retrieve_int_vector, idfn_name_id,
                                              file_suffix="deadwood/tc_"))
 def test_remaining_cards(hand: np.ndarray, expected_remaining_cards: np.ndarray):
-    counter = DeadwoodCounter(hand)
+    counter = DeadwoodCounterDP(hand)
     assert set(counter.remaining_cards()) == set(expected_remaining_cards)
 
 
@@ -51,7 +56,7 @@ def test_remaining_cards(hand: np.ndarray, expected_remaining_cards: np.ndarray)
                          retrieve_file_tests(retrieve_nonzero_indices, melds_expected, idfn_name_id,
                                              file_suffix="deadwood/tm_"))
 def test_melds(hand: np.ndarray, expected_melds: typing.Set[Meld]):
-    counter = DeadwoodCounter(hand)
+    counter = DeadwoodCounterDP(hand)
     assert set(counter.melds()) == expected_melds
 
 
@@ -60,7 +65,7 @@ def test_melds(hand: np.ndarray, expected_melds: typing.Set[Meld]):
                          retrieve_file_tests(retrieve_nonzero_indices, retrieve_int, idfn_name_id_expected,
                                              file_names=["deadwood/slow_cases_td.txt"]))
 def test_deadwood_slow(hand: np.ndarray, expected_deadwood: int):
-    counter = DeadwoodCounter(hand)
+    counter = DeadwoodCounterDP(hand)
     assert counter.deadwood() == expected_deadwood
 
 
@@ -69,11 +74,11 @@ def test_deadwood_slow(hand: np.ndarray, expected_deadwood: int):
                          retrieve_file_tests(retrieve_nonzero_indices, melds_expected, idfn_name_id,
                                              file_names=["deadwood/slow_cases_tm.txt"]))
 def test_melds_slow(hand: np.ndarray, expected_melds: typing.Set[Meld]):
-    counter = DeadwoodCounter(hand)
+    counter = DeadwoodCounterDP(hand)
     assert set(counter.melds()) == expected_melds
 
 
 @pytest.mark.parametrize("rank,expected_deadwood",
                          zip([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10]))
 def test_deadwood_val(rank: int, expected_deadwood: int):
-    assert DeadwoodCounter.deadwood_val(rank) == expected_deadwood
+    assert DeadwoodCounterDP.deadwood_val(rank) == expected_deadwood
