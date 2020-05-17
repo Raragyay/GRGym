@@ -245,7 +245,7 @@ class Environment:
         """
         Opponents is implemented as a function instead of a dictionary to allow for swapping of players.
         :param player:
-        :return:
+        :return: The opponent player.
         """
         if player == self.player_1:
             return self.player_2
