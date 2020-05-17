@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 import numpy as np
 import pytest
 
@@ -120,3 +122,23 @@ def test_report_opponent_drew_from_discard(test_player: Player):
         assert test_player.card_states[i - 1] == CardState.DISCARD_MINE_TOP
         assert test_player.card_states[i - 2] == CardState.DISCARD_MINE
         assert not test_player.has_card(i)
+
+
+def test_eq_cards(test_player: Player):
+    for i in range(52):
+        temp_player = deepcopy(test_player)
+        temp_player.add_card_from_deck(i)
+        assert not test_player == temp_player
+        test_player.add_card_from_deck(i)
+        assert test_player == temp_player
+    for i in range(52):
+        temp_player = deepcopy(test_player)
+        temp_player.add_card_from_discard(i, 0)
+        assert not test_player == temp_player
+        test_player.add_card_from_discard(i, 0)
+        assert test_player == temp_player
+    temp_player = deepcopy(test_player)
+    temp_player.score = 5
+    assert not test_player == temp_player
+    test_player.score = 5
+    assert test_player == temp_player

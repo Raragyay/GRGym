@@ -56,8 +56,18 @@ def test_remove_card(test_hand: Hand):
         assert not test_hand.has_card(i)
 
 
-def test_card_list(test_hand):
+def test_card_list(test_hand: Hand):
     for i in range(52):
         test_hand.add_card(i)
         test_list = np.arange(i + 1)
         np.testing.assert_array_equal(test_hand.card_list(), test_list)
+
+
+def test_eq(test_hand: Hand):
+    for i in range(52):
+        new_hand = Hand()
+        new_hand.cards = test_hand.cards.copy()
+        new_hand.add_card(i)
+        assert not test_hand == new_hand
+        test_hand.add_card(i)
+        assert test_hand == new_hand

@@ -64,3 +64,10 @@ class Player:
 
     def hand_mask(self) -> np.ndarray:
         return np.copy(self.hand.cards)
+
+    def __eq__(self, other):
+        if isinstance(other, Player):
+            return self.hand == other.hand and np.array_equal(self.card_states, other.card_states) and self.score == \
+                   other.score
+        else:
+            return False

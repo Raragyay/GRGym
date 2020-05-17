@@ -45,3 +45,6 @@ class Hand:
     def card_shorthand(cls, card_val: int):
         card = divmod(card_val, 13)
         return f"{cls.rank_symbols[card[1]]}{cls.suit_symbols[card[0]]}"
+
+    def __eq__(self, other):
+        return isinstance(other, Hand) and np.array_equal(self.cards, other.cards)
