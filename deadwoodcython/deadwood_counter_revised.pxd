@@ -25,6 +25,7 @@ cdef class DeadwoodCounterRevised:
 
     cdef INT64_T[:] suit_hands(DeadwoodCounterRevised self,INT32_T suit)
     cdef INT32_T determine_max_run_length(DeadwoodCounterRevised self, INT32_T suit)
+    # cdef (INT32_T,INT64_T,INT64_T) try_to_build_run(self)
 
     @staticmethod
     cdef INT32_T c_deadwood_val(INT32_T card)

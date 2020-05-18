@@ -12,6 +12,7 @@ cimport numpy as np
 from meld.meld import Meld
 from meld.run import Run
 from meld.set import Set
+from libc.limits cimport INT_MAX
 
 INT32 = np.int
 cdef class DeadwoodCounterRevised:
@@ -66,18 +67,20 @@ cdef class DeadwoodCounterRevised:
         :return:
         """
         # noinspection PyTypeChecker
-        cards_left_tuple: Tuple[int, int, int, int] = tuple(self.cards_left_list)
+        cards_left_tuple = tuple(self.cards_left_list)
         if cards_left_tuple in self.dp:
             return self.dp_retrieve(cards_left_tuple)
         if sum(cards_left_tuple) == 0:  # all cards used
             self.dp[cards_left_tuple] = 0
-            self.deadwood_cards_dp[cards_left_tuple] = 0
+            self.deadwood_cards_dp[cards_left_tuple] = 0LL
             self.melds_dp[cards_left_tuple] = 0LL
             return self.dp_retrieve(cards_left_tuple)
 
-        lowest_deadwood = sys.maxsize
-        lowest_deadwood_remaining_cards: int = 0
-        lowest_deadwood_melds: int = 0LL
+        cdef INT32_T lowest_deadwood = INT_MAX
+        cdef INT64_T lowest_deadwood_remaining_cards = 0LL
+        cdef INT64_T lowest_deadwood_melds = 0LL
+        cdef INT32_T prospective_deadwood
+        cdef INT64_T prospective_remaining_cards, prospective_melds
 
         for action in (self.try_to_build_set, self.try_to_build_run, self.try_to_drop_card):
             prospective_deadwood, prospective_remaining_cards, prospective_melds = action()
@@ -96,13 +99,14 @@ cdef class DeadwoodCounterRevised:
         self.melds_dp[cards_left_tuple] = lowest_deadwood_melds
         return self.dp_retrieve(cards_left_tuple)
 
-    def dp_retrieve(self, cards_left_tuple) -> Tuple[int, int, Tuple[Meld, ...]]:
+    def dp_retrieve(self, cards_left_tuple) -> Tuple[int, int, int]:
         return self.dp[cards_left_tuple], self.deadwood_cards_dp[cards_left_tuple], self.melds_dp[cards_left_tuple]
 
-    def try_to_drop_card(self) -> Tuple[int, int, Tuple[Meld, ...]]:
-        lowest_deadwood = sys.maxsize
-        lowest_deadwood_remaining_cards: int = 0
+    def try_to_drop_card(self) -> Tuple[int, int, int]:
+        cdef INT32_T lowest_deadwood = INT_MAX
+        cdef INT64_T lowest_deadwood_remaining_cards = 0LL
         cdef INT64_T lowest_deadwood_melds = 0LL
+
         for suit, cards_left in enumerate(self.cards_left_list):
             if cards_left == 0:
                 continue
@@ -117,22 +121,22 @@ cdef class DeadwoodCounterRevised:
             self.cards_left_list[suit] += 1  # restore card
         return lowest_deadwood, lowest_deadwood_remaining_cards, lowest_deadwood_melds
 
-    def try_to_build_set(self) -> Tuple[int, int, Tuple[Meld, ...]]:
+    def try_to_build_set(self) -> Tuple[int, int, int]:
         # Get rank of last card in each suit
         cdef Py_ssize_t i
         cdef INT32_T last_ranks[4]
         for i in range(4):
-             if self.cards_left_list[i] > 0:
-                 last_ranks[i]=self.suit_hands(i)[self.cards_left_list[i] - 1] % 13
-             else:
-                 last_ranks[i]=-i-1
+            if self.cards_left_list[i] > 0:
+                last_ranks[i] = self.suit_hands(i)[self.cards_left_list[i] - 1] % 13
+            else:
+                last_ranks[i] = -i - 1
         # last_ranks = [suit_hand[self.cards_left_list[suit] - 1] % 13 if
         #               self.cards_left_list[suit] > 0 else -suit - 1 for suit, suit_hand in enumerate(self.suit_hands)]
         last_ranks_count = Counter(last_ranks)
         # Find rank that can be a set
-        cdef (INT32_T,INT32_T) set_rank = last_ranks_count.most_common(1)[0]  # rank_val, frequency
+        cdef (INT32_T, INT32_T) set_rank = last_ranks_count.most_common(1)[0]  # rank_val, frequency
         if set_rank[1] < 3:  # Cannot form set
-            return sys.maxsize, 0, tuple()
+            return INT_MAX, 0LL, 0LL
         suits_with_set_rank = [idx for idx in range(4) if last_ranks[idx] == set_rank[0]]
         if len(suits_with_set_rank) == 3:  # Can only form 1 set
             for suit in suits_with_set_rank:  # Use card
@@ -161,10 +165,11 @@ cdef class DeadwoodCounterRevised:
                 self.cards_left_list[suit] += 1  # Restore all cards
             return lowest_deadwood, lowest_remaining_cards, lowest_melds
 
-    def try_to_build_run(self) -> Tuple[int, int, Tuple[Meld, ...]]:
-        lowest_deadwood: int = sys.maxsize
-        lowest_remaining_cards: int = 0
+    def try_to_build_run(self):  #(INT32_T,INT64_T,INT64_T)
+        cdef INT32_T lowest_deadwood = INT_MAX
+        cdef INT64_T lowest_remaining_cards = 0LL
         cdef INT64_T lowest_melds = 0LL
+        cdef INT32_T max_run_length, run_end_card
         for suit in range(4):
             if self.cards_left_list[suit] < 3:  # Not enough cards to build run
                 continue
@@ -238,28 +243,13 @@ cdef class DeadwoodCounterRevised:
         cdef Py_ssize_t i,j
         cdef INT32_T starting_card
         cdef list melds=[]
-        # for i in range(4):
-        #     for j in range(12):
-        #         if counter_mask&1==1: #If run is set
-        #             if not run_started:
-        #                 arr_size_counter+=1
-        #             else:
-        #                 run_started=True
-        #         counter_mask>>=1
-        #     if run_started:
-        #         run_started=False
-        #         arr_size_counter+=1
-        # for i in range(13):
-        #     if counter_mask&1==1:
-        #         arr_size_counter+=1
-        #     counter_mask>>=1
 
         for i in range(4):
             for j in range(12):
                 if mask&1==1:  # If run is set
                     if not run_started:
-                        starting_card=i*13+j
-                        run_started=True
+                        starting_card = i * 13 + j
+                        run_started = True
                     else:
                         run_started=False
                         melds.append(Run(starting_card,i*13+j))
