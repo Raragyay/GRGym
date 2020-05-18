@@ -1,23 +1,16 @@
-# cython: linetrace=True
-# distutils: define_macros=CYTHON_TRACE_NOGIL=1
-
+import sys
+import typing
 from collections import Counter
 from typing import Tuple
 
-cimport
-
-numpy as np
+cimport numpy as np
 import numpy as np
-from libc.limits cimport
-
-INT_MAX
 
 from meld.meld import Meld
 from meld.run import Run
 from meld.set import Set
 
-INT32 = np.int32
-
+DTYPE = np.int
 cdef class DeadwoodCounterRevised:
     """
     DeadwoodCounterDP(hand: np.ndarray)
@@ -27,7 +20,7 @@ cdef class DeadwoodCounterRevised:
     Compiles the deadwood value for the given hand, the best set of melds, and the deadwood cards.
     """
 
-    def __init__(self, np.ndarray[long long] hand):
+    def __init__(self, hand: np.ndarray):
         """
         Hand must be in suit then rank form, ascending order
 
@@ -41,40 +34,30 @@ cdef class DeadwoodCounterRevised:
 
         self.suit_hands = [self.diamonds, self.clubs, self.hearts, self.spades]
 
-        self.deadwood_cards_dp = dict()  #: [Tuple[int, int, int, int], int]
-        self.melds_dp = dict()  #: [Tuple[int, int, int, int], Tuple[Meld, ...]]
-        self.dp = dict()  #: Dict[Tuple[int, int, int, int], int]
-        self.cards_left_list = np.zeros(4, dtype=INT32)
+        self.deadwood_cards_dp = dict()
+        self.melds_dp = dict()
+        self.dp = dict()
+        self.cards_left_list = []
 
-    cpdef int deadwood(self):
-        self.reset_cards_left_list()
+    def deadwood(self) -> int:
+        self.cards_left_list = [len(suit_hand) for suit_hand in self.suit_hands]
         return self.recurse()[0]
 
-    cdef void reset_cards_left_list(self):
-        cdef Py_ssize_t i = 0
-        for i in range(len(self.suit_hands)):
-            self.cards_left_list[i] = len(self.suit_hands[i])
-
-    cpdef set remaining_cards(self):
-        self.reset_cards_left_list()
+    def remaining_cards(self) -> typing.Set[int]:
+        self.cards_left_list = [len(suit_hand) for suit_hand in self.suit_hands]
         return self.bit_mask_to_array(self.recurse()[1])
 
-    cpdef tuple melds(self):
-        self.reset_cards_left_list()
+    def melds(self) -> Tuple[Meld, ...]:
+        self.cards_left_list = [len(suit_hand) for suit_hand in self.suit_hands]
         return self.recurse()[2]
 
-    def recurse(self):
+    def recurse(self) -> Tuple[int, int, Tuple[Meld, ...]]:
         """
         TODO DOCUMENT
         :return:
         """
         # noinspection PyTypeChecker
-        cdef (INT32_T, INT32_T, INT32_T, INT32_T) cards_left_tuple
-        cdef INT32_T lowest_deadwood
-        cdef long long lowest_deadwood_remaining_cards
-        cdef tuple lowest_deadwood_melds
-
-        cards_left_tuple = tuple(self.cards_left_list)
+        cards_left_tuple: Tuple[int, int, int, int] = tuple(self.cards_left_list)
         if cards_left_tuple in self.dp:
             return self.dp_retrieve(cards_left_tuple)
         if sum(cards_left_tuple) == 0:  # all cards used
@@ -83,9 +66,9 @@ cdef class DeadwoodCounterRevised:
             self.melds_dp[cards_left_tuple] = tuple()
             return self.dp_retrieve(cards_left_tuple)
 
-        lowest_deadwood = INT_MAX
-        lowest_deadwood_remaining_cards = 0
-        lowest_deadwood_melds = tuple()
+        lowest_deadwood = sys.maxsize
+        lowest_deadwood_remaining_cards: int = 0
+        lowest_deadwood_melds: Tuple[Meld, ...] = tuple()
 
         for action in (self.try_to_build_set, self.try_to_build_run, self.try_to_drop_card):
             prospective_deadwood, prospective_remaining_cards, prospective_melds = action()
@@ -108,8 +91,8 @@ cdef class DeadwoodCounterRevised:
         return self.dp[cards_left_tuple], self.deadwood_cards_dp[cards_left_tuple], self.melds_dp[cards_left_tuple]
 
     def try_to_drop_card(self) -> Tuple[int, int, Tuple[Meld, ...]]:
-        cdef int lowest_deadwood = INT_MAX
-        cdef long long lowest_deadwood_remaining_cards = 0
+        lowest_deadwood = sys.maxsize
+        lowest_deadwood_remaining_cards: int = 0
         lowest_deadwood_melds: Tuple[Meld, ...] = tuple()
         for suit, cards_left in enumerate(self.cards_left_list):
             if cards_left == 0:
@@ -127,20 +110,13 @@ cdef class DeadwoodCounterRevised:
 
     def try_to_build_set(self) -> Tuple[int, int, Tuple[Meld, ...]]:
         # Get rank of last card in each suit
-        # cdef np.ndarray[INT32_T] last_ranks=np.zeros((4,),dtype=INT32)
-        # cdef Py_ssize_t suit
-        # for suit in range(len(self.suit_hands)):
-        #     if self.cards_left_list[suit] > 0:
-        #         last_ranks[suit] = self.suit_hands[suit][self.cards_left_list[suit] - 1] % 13
-        #     else:
-        #         last_ranks[suit] = -suit - 1
         last_ranks = [suit_hand[self.cards_left_list[suit] - 1] % 13 if
                       self.cards_left_list[suit] > 0 else -suit - 1 for suit, suit_hand in enumerate(self.suit_hands)]
         last_ranks_count = Counter(last_ranks)
         # Find rank that can be a set
         set_rank: Tuple[int, int] = last_ranks_count.most_common(1)[0]  # rank_val, frequency
         if set_rank[1] < 3:  # Cannot form set
-            return INT_MAX, 0, tuple()
+            return sys.maxsize, 0, tuple()
         suits_with_set_rank = [idx for idx in range(4) if last_ranks[idx] == set_rank[0]]
         if len(suits_with_set_rank) == 3:  # Can only form 1 set
             for suit in suits_with_set_rank:  # Use card
@@ -170,7 +146,7 @@ cdef class DeadwoodCounterRevised:
             return lowest_deadwood, lowest_remaining_cards, lowest_melds
 
     def try_to_build_run(self) -> Tuple[int, int, Tuple[Meld, ...]]:
-        lowest_deadwood: int = INT_MAX
+        lowest_deadwood: int = sys.maxsize
         lowest_remaining_cards: int = 0
         lowest_melds: Tuple[Meld, ...] = tuple()
         for suit in range(4):

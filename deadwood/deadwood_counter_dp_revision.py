@@ -49,7 +49,6 @@ class DeadwoodCounterDPRevision(DeadwoodCounter):
 
     def melds(self) -> Tuple[Meld, ...]:
         self.cards_left_list = [len(suit_hand) for suit_hand in self.suit_hands]
-        np.packbits
         return self.recurse()[2]
 
     def recurse(self) -> Tuple[int, int, Tuple[Meld, ...]]:

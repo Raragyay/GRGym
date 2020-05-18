@@ -1,10 +1,4 @@
-mport
-numpy as np
 cimport numpy as np
-
-cimport
-
-numpy as np
 import numpy as np
 
 ctypedef np.int_t INT32_T
@@ -21,9 +15,9 @@ cdef class DeadwoodCounterRevised:
     cdef np.ndarray hand, diamonds, clubs, hearts, spades
     cdef list suit_hands
     cdef dict deadwood_cards_dp, melds_dp, dp
-    cdef np.ndarray cards_left_list
-
-    cpdef int deadwood(self)
-    cdef void reset_cards_left_list(self)
-    cpdef set remaining_cards(self)
-    cpdef tuple melds(self)
+    cdef list cards_left_list
+    #
+    # cpdef int deadwood(self)
+    # cdef void reset_cards_left_list(self)
+    # cpdef set remaining_cards(self)
+    # cpdef tuple melds(self)
