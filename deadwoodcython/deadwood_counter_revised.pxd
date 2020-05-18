@@ -23,9 +23,16 @@ cdef class DeadwoodCounterRevised:
     # cpdef set remaining_cards(self)
     # cpdef tuple melds(self)
 
-    cpdef INT64_T[:] suit_hands(DeadwoodCounterRevised self,INT32_T suit)
+    cdef INT64_T[:] suit_hands(DeadwoodCounterRevised self,INT32_T suit)
     cdef INT32_T determine_max_run_length(DeadwoodCounterRevised self, INT32_T suit)
 
     @staticmethod
     cdef INT32_T c_deadwood_val(INT32_T card)
     cdef set bit_mask_to_array(DeadwoodCounterRevised self, INT64_T bit_mask)
+
+    @staticmethod
+    cdef list decode_meld_mask(INT64_T mask)
+    @staticmethod
+    cdef INT64_T add_set(INT64_T current_mask,INT64_T set_rank)
+    @staticmethod
+    cdef INT64_T add_run(INT64_T current_mask,INT64_T start,INT64_T end)

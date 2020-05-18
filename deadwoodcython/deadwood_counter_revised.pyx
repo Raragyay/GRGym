@@ -58,9 +58,9 @@ cdef class DeadwoodCounterRevised:
 
     def melds(self) -> Tuple[Meld, ...]:
         self.reset_cards_left_list()
-        return self.recurse()[2]
+        return DeadwoodCounterRevised.decode_meld_mask(self.recurse()[2])
 
-    def recurse(self) -> Tuple[int, int, Tuple[Meld, ...]]:
+    def recurse(self) -> Tuple[int, int, int]:
         """
         TODO DOCUMENT
         :return:
@@ -72,12 +72,12 @@ cdef class DeadwoodCounterRevised:
         if sum(cards_left_tuple) == 0:  # all cards used
             self.dp[cards_left_tuple] = 0
             self.deadwood_cards_dp[cards_left_tuple] = 0
-            self.melds_dp[cards_left_tuple] = tuple()
+            self.melds_dp[cards_left_tuple] = 0LL
             return self.dp_retrieve(cards_left_tuple)
 
         lowest_deadwood = sys.maxsize
         lowest_deadwood_remaining_cards: int = 0
-        lowest_deadwood_melds: Tuple[Meld, ...] = tuple()
+        lowest_deadwood_melds: int = 0LL
 
         for action in (self.try_to_build_set, self.try_to_build_run, self.try_to_drop_card):
             prospective_deadwood, prospective_remaining_cards, prospective_melds = action()
@@ -102,7 +102,7 @@ cdef class DeadwoodCounterRevised:
     def try_to_drop_card(self) -> Tuple[int, int, Tuple[Meld, ...]]:
         lowest_deadwood = sys.maxsize
         lowest_deadwood_remaining_cards: int = 0
-        lowest_deadwood_melds: Tuple[Meld, ...] = tuple()
+        cdef INT64_T lowest_deadwood_melds = 0LL
         for suit, cards_left in enumerate(self.cards_left_list):
             if cards_left == 0:
                 continue
@@ -130,7 +130,7 @@ cdef class DeadwoodCounterRevised:
         #               self.cards_left_list[suit] > 0 else -suit - 1 for suit, suit_hand in enumerate(self.suit_hands)]
         last_ranks_count = Counter(last_ranks)
         # Find rank that can be a set
-        set_rank: Tuple[int, int] = last_ranks_count.most_common(1)[0]  # rank_val, frequency
+        cdef (INT32_T,INT32_T) set_rank = last_ranks_count.most_common(1)[0]  # rank_val, frequency
         if set_rank[1] < 3:  # Cannot form set
             return sys.maxsize, 0, tuple()
         suits_with_set_rank = [idx for idx in range(4) if last_ranks[idx] == set_rank[0]]
@@ -138,7 +138,7 @@ cdef class DeadwoodCounterRevised:
             for suit in suits_with_set_rank:  # Use card
                 self.cards_left_list[suit] -= 1
             deadwood, remaining_cards, melds = self.recurse()
-            melds = melds + (Set(rank=set_rank[0]),)
+            melds = DeadwoodCounterRevised.add_set(melds,set_rank[0])
             for suit in suits_with_set_rank:  # Restore card
                 self.cards_left_list[suit] += 1
             return deadwood, remaining_cards, melds
@@ -147,7 +147,7 @@ cdef class DeadwoodCounterRevised:
             for suit in range(4):
                 self.cards_left_list[suit] -= 1
             lowest_deadwood, lowest_remaining_cards, lowest_melds = self.recurse()
-            lowest_melds = lowest_melds + (Set(rank=set_rank[0]),)
+            lowest_melds = DeadwoodCounterRevised.add_set(lowest_melds,set_rank[0])
 
             for excluded_suit in range(4):
                 self.cards_left_list[excluded_suit] += 1  # Restore card
@@ -155,7 +155,7 @@ cdef class DeadwoodCounterRevised:
                 if prospective_deadwood < lowest_deadwood:
                     lowest_deadwood = prospective_deadwood
                     lowest_remaining_cards = prospective_remaining_cards
-                    lowest_melds = prospective_melds + (Set(rank=set_rank[0]),)
+                    lowest_melds = DeadwoodCounterRevised.add_set(prospective_melds, set_rank[0])
                 self.cards_left_list[excluded_suit] -= 1  # Use card
             for suit in range(4):
                 self.cards_left_list[suit] += 1  # Restore all cards
@@ -164,7 +164,7 @@ cdef class DeadwoodCounterRevised:
     def try_to_build_run(self) -> Tuple[int, int, Tuple[Meld, ...]]:
         lowest_deadwood: int = sys.maxsize
         lowest_remaining_cards: int = 0
-        lowest_melds: Tuple[Meld, ...] = tuple()
+        cdef INT64_T lowest_melds = 0LL
         for suit in range(4):
             if self.cards_left_list[suit] < 3:  # Not enough cards to build run
                 continue
@@ -180,7 +180,7 @@ cdef class DeadwoodCounterRevised:
                     lowest_deadwood = prospective_deadwood
                     lowest_remaining_cards = prospective_remaining_cards
                     run_start_card = self.suit_hands(suit)[self.cards_left_list[suit]]
-                    lowest_melds = prospective_melds + (Run(run_start_card, run_end_card),)
+                    lowest_melds = DeadwoodCounterRevised.add_run(prospective_melds, run_start_card, run_end_card)
             self.cards_left_list[suit] += max_run_length
         return lowest_deadwood, lowest_remaining_cards, lowest_melds
 
@@ -214,7 +214,66 @@ cdef class DeadwoodCounterRevised:
     cdef set bit_mask_to_array(DeadwoodCounterRevised self, INT64_T bit_mask):
         return {bit for bit in range(52) if (bit_mask & (1LL << bit)) != 0}
 
-    cpdef INT64_T[:] suit_hands(DeadwoodCounterRevised self,INT32_T suit):
+    """
+    Masks are in the form [13*SET][Q-A RUN]
+    For example, a set of aces would be encoded at bit 48
+    A run from Ace of diamonds to 4 of diamonds would be encoded at bits 0 and 3
+    A run from Jack of diamonds to King of diamonds would only be encoded at bit 10. King of diamonds (12) would not 
+    be encoded
+    """
+    @staticmethod
+    cdef INT64_T add_run(INT64_T current_mask,INT64_T start,INT64_T end):
+        current_mask|=(1LL<<((start//13*12)+start%13))
+        if(end-12)%13!=0:  # Is not a king
+            current_mask|=(1LL<<((end//13*12)+end%13))
+        return current_mask
+
+    @staticmethod
+    cdef INT64_T add_set(INT64_T current_mask,INT64_T set_rank):
+        return current_mask|(1LL<<(48+set_rank))
+
+    @staticmethod
+    cdef list decode_meld_mask(INT64_T mask):
+        cdef bint run_started=False
+        cdef Py_ssize_t i,j
+        cdef INT32_T starting_card
+        cdef list melds=[]
+        # for i in range(4):
+        #     for j in range(12):
+        #         if counter_mask&1==1: #If run is set
+        #             if not run_started:
+        #                 arr_size_counter+=1
+        #             else:
+        #                 run_started=True
+        #         counter_mask>>=1
+        #     if run_started:
+        #         run_started=False
+        #         arr_size_counter+=1
+        # for i in range(13):
+        #     if counter_mask&1==1:
+        #         arr_size_counter+=1
+        #     counter_mask>>=1
+
+        for i in range(4):
+            for j in range(12):
+                if mask&1==1:  # If run is set
+                    if not run_started:
+                        starting_card=i*13+j
+                        run_started=True
+                    else:
+                        run_started=False
+                        melds.append(Run(starting_card,i*13+j))
+                mask>>=1
+            if run_started:
+                run_started=False
+                melds.append(Run(starting_card,i*13+j))
+        for i in range(13):
+            if mask&1==1:
+                melds.append(Set(i))
+            mask>>=1
+        return melds
+
+    cdef INT64_T[:] suit_hands(DeadwoodCounterRevised self,INT32_T suit):
         if suit==0:
             return self.diamonds
         elif suit==1:
