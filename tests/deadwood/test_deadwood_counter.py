@@ -85,4 +85,4 @@ def test_melds_slow(hand: np.ndarray, expected_melds: typing.Set[Meld], deadwood
 @pytest.mark.parametrize("rank,expected_deadwood",
                          zip([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10]))
 def test_deadwood_val(rank: int, expected_deadwood: int, deadwood_counter: DeadwoodCounter.__class__):
-    assert deadwood_counter.deadwood_val(rank) == expected_deadwood
+    assert deadwood_counter(np.asarray([])).deadwood_val(rank) == expected_deadwood

@@ -6,6 +6,7 @@ from typing import Tuple
 cimport numpy as np
 import numpy as np
 
+
 from meld.meld import Meld
 from meld.run import Run
 from meld.set import Set
@@ -180,8 +181,7 @@ cdef class DeadwoodCounterRevised:
                 break
         return max_run_length
 
-    @staticmethod
-    def deadwood_val(card: int) -> int:
+    cpdef INT32_T deadwood_val(DeadwoodCounterRevised self, INT32_T card):
         rank = card % 13
         if rank >= 9:
             return 10

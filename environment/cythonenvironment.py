@@ -18,6 +18,8 @@ class CythonEnvironment:
     GIN_BONUS = 25
     BIG_GIN_BONUS = 31
 
+    deadwood_counter = DeadwoodCounterRevised(np.asarray([0]))
+
     def __init__(self, opponent_agent: BaseAgent):
         self.card_states = np.zeros((52,), np.int8)
         self.player_1 = Player()
@@ -194,7 +196,7 @@ class CythonEnvironment:
                     logging.error(f"Card {card} was inserted into connectable_remaining_cards, but it is not an "
                                   f"extension of any run. ")
                 opponent_remaining_cards.remove(card)
-                opponent_deadwood -= DeadwoodCounterRevised.deadwood_val(card)
+                opponent_deadwood -= deadwood_counter.deadwood_val(card)
 
         # try to layoff into sets
         set_melds: typing.Set[Set] = {deepcopy(meld) for meld in knocking_player_melds if isinstance(meld, Set)}
@@ -206,7 +208,7 @@ class CythonEnvironment:
                 break
             for card in connectable_remaining_cards:
                 opponent_remaining_cards.remove(card)
-                opponent_deadwood -= DeadwoodCounterRevised.deadwood_val(card)
+                opponent_deadwood -= deadwood_counter.deadwood_val(card)
 
         # Check score difference
         if knocking_player_deadwood < opponent_deadwood:  # won hand

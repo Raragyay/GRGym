@@ -21,3 +21,4 @@ cdef class DeadwoodCounterRevised:
     # cdef void reset_cards_left_list(self)
     # cpdef set remaining_cards(self)
     # cpdef tuple melds(self)
+    cpdef INT32_T deadwood_val(DeadwoodCounterRevised self, INT32_T card)
