@@ -1,22 +1,17 @@
 # cython: profile=True,language_level=3
 
-import sys
 import typing
-from collections import Counter
 from typing import Tuple
 
 cimport cython
 import numpy as np
 cimport numpy as np
 from libc.string cimport memset
-from libc.stdlib cimport malloc, free
 
 from meld.meld import Meld
 from meld.run import Run
 from meld.set import Set
 from libc.limits cimport INT_MAX
-from cpython cimport array
-import array
 
 INT32 = np.int
 
@@ -46,10 +41,10 @@ cdef class DeadwoodCounterRevised:
         self.result = [0, 0, 0]
 
         self.actions = [self.try_to_build_set, self.try_to_build_run, self.try_to_drop_card]
-        self.noo = 0x3f3f3f3f3f3f3f3f
+        self.UNDEFINED = 0x3f3f3f3f3f3f3f3f
         memset(self.dp, 0x3f, 14 * 14 * 14 * 14 * 3 * sizeof(INT64_T))
 
-    def deadwood(self) -> int:
+    cpdef INT64_T deadwood(self):
         self.reset_cards_left_list()
         self.recurse()
         return self.result[0]
@@ -59,12 +54,12 @@ cdef class DeadwoodCounterRevised:
         for i in range(4):
             self.cards_left_list[i] = len(self.suit_hands(i))
 
-    def remaining_cards(self) -> typing.Set[int]:
+    cpdef set remaining_cards(self):
         self.reset_cards_left_list()
         self.recurse()
         return self.bit_mask_to_array(self.result[1])
 
-    def melds(self) -> Tuple[Meld, ...]:
+    cpdef list melds(self):
         self.reset_cards_left_list()
         self.recurse()
         return DeadwoodCounterRevised.decode_meld_mask(self.result[2])
@@ -78,15 +73,18 @@ cdef class DeadwoodCounterRevised:
         if self.in_dp():
             self.build_from_dp()
             return
-        if sum(self.cards_left_list) == 0:  # all cards used
+        if self.cards_left_list[0] == self.cards_left_list[1] == self.cards_left_list[2] == self.cards_left_list[
+            3] == 0:
+            # all cards used
             self.set_dp(0LL, 0LL, 0LL)
             self.build_from_dp()
             return
 
-        cdef INT64_T lowest_deadwood = INT_MAX
-        cdef INT64_T lowest_deadwood_remaining_cards = 0LL
-        cdef INT64_T lowest_deadwood_melds = 0LL
-        cdef INT64_T prospective_deadwood, prospective_remaining_cards, prospective_melds
+        cdef:
+            INT64_T lowest_deadwood = INT_MAX
+            INT64_T lowest_deadwood_remaining_cards = 0LL
+            INT64_T lowest_deadwood_melds = 0LL
+            INT64_T prospective_deadwood, prospective_remaining_cards, prospective_melds
 
         for action in self.actions:
             action(self)
@@ -106,23 +104,23 @@ cdef class DeadwoodCounterRevised:
         self.build_from_dp()
         return
 
-    cdef void set_dp(self, deadwood, cards_left, melds):
-        self.dp[self.idx() + 0] = deadwood
-        self.dp[self.idx() + 1] = cards_left
-        self.dp[self.idx() + 2] = melds
+    cdef void set_dp(self, INT64_T deadwood, INT64_T cards_left, INT64_T melds):
+        self.dp[self.cards_left_to_idx() + 0] = deadwood
+        self.dp[self.cards_left_to_idx() + 1] = cards_left
+        self.dp[self.cards_left_to_idx() + 2] = melds
 
-    cdef Py_ssize_t idx(self):
+    cdef Py_ssize_t cards_left_to_idx(self):
         return self.cards_left_list[0] * 14 * 14 * 14 * 3 + self.cards_left_list[1] * 14 * 14 * 3 + \
                self.cards_left_list[2] * 14 * 3 + self.cards_left_list[3] * 3
 
     cdef void build_from_dp(self):
         self.build_result(
-            self.dp[self.idx() + 0],
-            self.dp[self.idx() + 1],
-            self.dp[self.idx() + 2])
+            self.dp[self.cards_left_to_idx() + 0],
+            self.dp[self.cards_left_to_idx() + 1],
+            self.dp[self.cards_left_to_idx() + 2])
 
     cdef bint in_dp(self):
-        return self.dp[self.idx() + 0] != self.noo
+        return self.dp[self.cards_left_to_idx() + 0] != self.UNDEFINED
 
     cdef void build_result(self, INT64_T deadwood, INT64_T cards_left, INT64_T melds):
         self.result[0] = deadwood
@@ -130,11 +128,17 @@ cdef class DeadwoodCounterRevised:
         self.result[2] = melds
 
     cdef void try_to_drop_card(self):
-        cdef INT64_T lowest_deadwood = INT_MAX
-        cdef INT64_T lowest_deadwood_remaining_cards = 0LL
-        cdef INT64_T lowest_deadwood_melds = 0LL
+        cdef:
+            INT64_T lowest_deadwood = INT_MAX
+            INT64_T lowest_deadwood_remaining_cards = 0LL
+            INT64_T lowest_deadwood_melds = 0LL
+            Py_ssize_t suit
+            INT32_T cards_left
+            INT64_T ignored_card, ignored_card_deadwood
+            INT64_T prospective_deadwood, prospective_remaining_cards, prospective_melds
 
-        for suit, cards_left in enumerate(self.cards_left_list):
+        for suit in range(4):
+            cards_left = self.cards_left_list[suit]
             if cards_left == 0:
                 continue
             ignored_card = self.suit_hands(suit)[self.cards_left_list[suit] - 1]
@@ -148,7 +152,7 @@ cdef class DeadwoodCounterRevised:
 
             if prospective_deadwood + ignored_card_deadwood < lowest_deadwood:
                 lowest_deadwood = prospective_deadwood + ignored_card_deadwood
-                lowest_deadwood_remaining_cards = prospective_remaining_cards | (1 << ignored_card)
+                lowest_deadwood_remaining_cards = prospective_remaining_cards | (1LL << ignored_card)
                 lowest_deadwood_melds = prospective_melds
             self.cards_left_list[suit] += 1  # restore card
         self.build_result(lowest_deadwood, lowest_deadwood_remaining_cards, lowest_deadwood_melds)
@@ -156,47 +160,59 @@ cdef class DeadwoodCounterRevised:
 
     cdef void try_to_build_set(self):
         # Get rank of last card in each suit
-        cdef Py_ssize_t i
-        cdef INT32_T last_ranks[4]
+        cdef:
+            Py_ssize_t i, j
+            INT64_T last_ranks[4]
+            INT32_T counter_arr[18]
+            INT64_T max_freq_rank = 0
+            INT32_T frequency = 0
+            INT64_T last_rank
+            INT64_T suits_with_set_rank[4]
+        memset(counter_arr, 0, 18 * sizeof(INT32_T))
+
+        # Find most frequent rank and its frequency
+
         for i in range(4):
             if self.cards_left_list[i] > 0:
-                last_ranks[i] = self.suit_hands(i)[self.cards_left_list[i] - 1] % 13
+                last_rank = self.suit_hands(i)[self.cards_left_list[i] - 1] % 13
             else:
-                last_ranks[i] = -i - 1
-        # last_ranks = [suit_hand[self.cards_left_list[suit] - 1] % 13 if
-        #               self.cards_left_list[suit] > 0 else -suit - 1 for suit, suit_hand in enumerate(self.suit_hands)]
-        last_ranks_count = Counter(last_ranks)
-        # Find rank that can be a set
-        cdef (INT32_T, INT32_T) set_rank = last_ranks_count.most_common(1)[0]  # rank_val, frequency
-        if set_rank[1] < 3:  # Cannot form set
+                last_rank = -i - 1
+            last_ranks[i] = last_rank
+            counter_arr[last_rank + 5] += 1
+
+        for i in range(18):
+            if counter_arr[i] > frequency:
+                max_freq_rank = i - 5
+                frequency = counter_arr[i]
+
+        if frequency < 3:  # Cannot form set
             self.build_result(INT_MAX, 0LL, 0LL)
             return
-        suits_with_set_rank = [idx for idx in range(4) if last_ranks[idx] == set_rank[0]]
-        if len(suits_with_set_rank) == 3:  # Can only form 1 set
-            for suit in suits_with_set_rank:  # Use card
-                self.cards_left_list[suit] -= 1
 
+        # Determine all suits with set rank
+        j = 0
+        for i in range(4):
+            if last_ranks[i] == max_freq_rank:
+                suits_with_set_rank[j] = i
+                j += 1
+
+        for i in range(frequency):  # Use all available cards
+            self.cards_left_list[suits_with_set_rank[i]] -= 1
+
+        if frequency == 3:  # Can only form 1 set
             self.recurse()
             deadwood = self.result[0]
             remaining_cards = self.result[1]
             melds = self.result[2]
-
-            melds = DeadwoodCounterRevised.add_set(melds, set_rank[0])
-            for suit in suits_with_set_rank:  # Restore card
-                self.cards_left_list[suit] += 1
+            melds = DeadwoodCounterRevised.add_set(melds, max_freq_rank)
             self.build_result(deadwood, remaining_cards, melds)
-            return
         else:  # all suits have same rank
-            # use all suits
-            for suit in range(4):
-                self.cards_left_list[suit] -= 1
-
             self.recurse()
             lowest_deadwood = self.result[0]
             lowest_remaining_cards = self.result[1]
             lowest_melds = self.result[2]
 
-            lowest_melds = DeadwoodCounterRevised.add_set(lowest_melds, set_rank[0])
+            lowest_melds = DeadwoodCounterRevised.add_set(lowest_melds, max_freq_rank)
 
             for excluded_suit in range(4):
                 self.cards_left_list[excluded_suit] += 1  # Restore card
@@ -209,18 +225,22 @@ cdef class DeadwoodCounterRevised:
                 if prospective_deadwood < lowest_deadwood:
                     lowest_deadwood = prospective_deadwood
                     lowest_remaining_cards = prospective_remaining_cards
-                    lowest_melds = DeadwoodCounterRevised.add_set(prospective_melds, set_rank[0])
+                    lowest_melds = DeadwoodCounterRevised.add_set(prospective_melds, max_freq_rank)
                 self.cards_left_list[excluded_suit] -= 1  # Use card
-            for suit in range(4):
-                self.cards_left_list[suit] += 1  # Restore all cards
+
             self.build_result(lowest_deadwood, lowest_remaining_cards, lowest_melds)
-            return
+
+        for i in range(frequency):  # Restore all cards
+            self.cards_left_list[suits_with_set_rank[i]] += 1
+        return
 
     cdef void try_to_build_run(self):  #
-        cdef INT64_T lowest_deadwood = INT_MAX
-        cdef INT64_T lowest_remaining_cards = 0LL
-        cdef INT64_T lowest_melds = 0LL
-        cdef INT32_T max_run_length, run_end_card
+        cdef:
+            INT64_T lowest_deadwood = INT_MAX
+            INT64_T lowest_remaining_cards = 0LL
+            INT64_T lowest_melds = 0LL
+            INT32_T max_run_length
+            INT64_T run_start_card, run_end_card
         for suit in range(4):
             if self.cards_left_list[suit] < 3:  # Not enough cards to build run
                 continue

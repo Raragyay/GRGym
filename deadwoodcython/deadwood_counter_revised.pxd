@@ -18,16 +18,16 @@ cdef class DeadwoodCounterRevised:
     cdef INT64_T result[3]
     cdef ACTION_FUNC actions[3]
     cdef INT64_T dp[14*14*14*14*3]
-    cdef INT64_T noo
+    cdef INT64_T UNDEFINED
     #
-    # cpdef int deadwood(self)
+    cpdef INT64_T deadwood(self)
     cdef void reset_cards_left_list(self)
-    # cpdef set remaining_cards(self)
-    # cpdef tuple melds(self)
+    cpdef set remaining_cards(self)
+    cpdef list melds(self)
     cdef void recurse(self)
     cdef bint in_dp(self)
-    cdef Py_ssize_t idx(self)
-    cdef void set_dp(self, deadwood, cards_left, melds)
+    cdef Py_ssize_t cards_left_to_idx(self)
+    cdef void set_dp(self, INT64_T deadwood, INT64_T cards_left, INT64_T melds)
     cdef void build_from_dp(self)
     cdef void build_result(self, INT64_T deadwood,INT64_T cards_left,INT64_T melds)
     cdef void try_to_drop_card(self)
