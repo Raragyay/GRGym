@@ -2,7 +2,7 @@ cimport numpy as np
 import numpy as np
 
 ctypedef np.int_t INT32_T
-ctypedef np.longlong_t LL_T
+ctypedef np.longlong_t INT64_T
 
 cdef class DeadwoodCounterRevised:
     """
@@ -12,13 +12,16 @@ cdef class DeadwoodCounterRevised:
 
     Compiles the deadwood value for the given hand, the best set of melds, and the deadwood cards.
     """
-    cdef np.ndarray hand, diamonds, clubs, hearts, spades
-    cdef list suit_hands
+    cdef np.ndarray hand
+    cdef INT64_T[:] diamonds, clubs, hearts, spades
+    # cdef int[:] suit_hands[4]
     cdef dict deadwood_cards_dp, melds_dp, dp
-    cdef list cards_left_list
+    cdef INT32_T cards_left_list[4]
     #
     # cpdef int deadwood(self)
-    # cdef void reset_cards_left_list(self)
+    cdef void reset_cards_left_list(self)
     # cpdef set remaining_cards(self)
     # cpdef tuple melds(self)
+    cpdef INT64_T[:] suit_hands(DeadwoodCounterRevised self,INT32_T suit)
+    cdef INT32_T determine_max_run_length(DeadwoodCounterRevised self, INT32_T suit)
     cpdef INT32_T deadwood_val(DeadwoodCounterRevised self, INT32_T card)

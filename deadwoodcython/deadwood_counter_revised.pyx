@@ -4,14 +4,14 @@ from collections import Counter
 from typing import Tuple
 
 cimport numpy as np
+cimport cython
 import numpy as np
-
 
 from meld.meld import Meld
 from meld.run import Run
 from meld.set import Set
 
-DTYPE = np.int
+INT32 = np.int
 cdef class DeadwoodCounterRevised:
     """
     DeadwoodCounterDP(hand: np.ndarray)
@@ -33,23 +33,28 @@ cdef class DeadwoodCounterRevised:
         self.hearts = self.hand[np.logical_and(self.hand >= 26, self.hand < 39)]
         self.spades = self.hand[self.hand >= 39]
 
-        self.suit_hands = [self.diamonds, self.clubs, self.hearts, self.spades]
+        # self.suit_hands = [self.diamonds, self.clubs, self.hearts, self.spades]
 
         self.deadwood_cards_dp = dict()
         self.melds_dp = dict()
         self.dp = dict()
-        self.cards_left_list = []
+        self.cards_left_list = [0,0,0,0]
 
     def deadwood(self) -> int:
-        self.cards_left_list = [len(suit_hand) for suit_hand in self.suit_hands]
+        self.reset_cards_left_list()
         return self.recurse()[0]
 
+    cdef void reset_cards_left_list(self):
+        cdef Py_ssize_t i
+        for i in range(4):
+            self.cards_left_list[i] = len(self.suit_hands(i))
+
     def remaining_cards(self) -> typing.Set[int]:
-        self.cards_left_list = [len(suit_hand) for suit_hand in self.suit_hands]
+        self.reset_cards_left_list()
         return self.bit_mask_to_array(self.recurse()[1])
 
     def melds(self) -> Tuple[Meld, ...]:
-        self.cards_left_list = [len(suit_hand) for suit_hand in self.suit_hands]
+        self.reset_cards_left_list()
         return self.recurse()[2]
 
     def recurse(self) -> Tuple[int, int, Tuple[Meld, ...]]:
@@ -98,7 +103,7 @@ cdef class DeadwoodCounterRevised:
         for suit, cards_left in enumerate(self.cards_left_list):
             if cards_left == 0:
                 continue
-            ignored_card = self.suit_hands[suit][self.cards_left_list[suit] - 1]
+            ignored_card = self.suit_hands(suit)[self.cards_left_list[suit] - 1]
             ignored_card_deadwood = self.deadwood_val(ignored_card)
             self.cards_left_list[suit] -= 1  # Ignore card
             prospective_deadwood, prospective_remaining_cards, prospective_melds = self.recurse()
@@ -111,8 +116,15 @@ cdef class DeadwoodCounterRevised:
 
     def try_to_build_set(self) -> Tuple[int, int, Tuple[Meld, ...]]:
         # Get rank of last card in each suit
-        last_ranks = [suit_hand[self.cards_left_list[suit] - 1] % 13 if
-                      self.cards_left_list[suit] > 0 else -suit - 1 for suit, suit_hand in enumerate(self.suit_hands)]
+        cdef Py_ssize_t i
+        cdef INT32_T last_ranks[4]
+        for i in range(4):
+             if self.cards_left_list[i] > 0:
+                 last_ranks[i]=self.suit_hands(i)[self.cards_left_list[i] - 1] % 13
+             else:
+                 last_ranks[i]=-i-1
+        # last_ranks = [suit_hand[self.cards_left_list[suit] - 1] % 13 if
+        #               self.cards_left_list[suit] > 0 else -suit - 1 for suit, suit_hand in enumerate(self.suit_hands)]
         last_ranks_count = Counter(last_ranks)
         # Find rank that can be a set
         set_rank: Tuple[int, int] = last_ranks_count.most_common(1)[0]  # rank_val, frequency
@@ -154,7 +166,7 @@ cdef class DeadwoodCounterRevised:
             if self.cards_left_list[suit] < 3:  # Not enough cards to build run
                 continue
             max_run_length = self.determine_max_run_length(suit)
-            run_end_card = self.suit_hands[suit][self.cards_left_list[suit] - 1]
+            run_end_card = self.suit_hands(suit)[self.cards_left_list[suit] - 1]
             if max_run_length < 3:
                 continue
             self.cards_left_list[suit] -= 2
@@ -164,25 +176,28 @@ cdef class DeadwoodCounterRevised:
                 if prospective_deadwood < lowest_deadwood:
                     lowest_deadwood = prospective_deadwood
                     lowest_remaining_cards = prospective_remaining_cards
-                    run_start_card = self.suit_hands[suit][self.cards_left_list[suit]]
+                    run_start_card = self.suit_hands(suit)[self.cards_left_list[suit]]
                     lowest_melds = prospective_melds + (Run(run_start_card, run_end_card),)
             self.cards_left_list[suit] += max_run_length
         return lowest_deadwood, lowest_remaining_cards, lowest_melds
 
-    def determine_max_run_length(self, suit: int) -> int:
-        suit_hand = self.suit_hands[suit]
-        prev_rank = suit_hand[self.cards_left_list[suit] - 1] % 13
-        max_run_length = 1
-        while max_run_length < self.cards_left_list[suit]:
-            if prev_rank - suit_hand[self.cards_left_list[suit] - 1 - max_run_length] % 13 == 1:  # Is consecutive
+    @cython.boundscheck(False) # turn off bounds-checking for entire function
+    cdef INT32_T determine_max_run_length(DeadwoodCounterRevised self, INT32_T suit):
+        cdef INT64_T[:] suit_hand = self.suit_hands(suit)
+        cdef INT32_T max_run_length = self.cards_left_list[suit] # This will always be >=3
+        cdef INT64_T prev_rank = suit_hand[max_run_length - 1] % 13
+        cdef INT32_T run_length = 1
+
+        while run_length < max_run_length:
+            if prev_rank - suit_hand[max_run_length - 1 - run_length] % 13 == 1:  # Is consecutive
                 prev_rank -= 1
-                max_run_length += 1
+                run_length += 1
             else:
                 break
-        return max_run_length
+        return run_length
 
     cpdef INT32_T deadwood_val(DeadwoodCounterRevised self, INT32_T card):
-        rank = card % 13
+        cdef INT32_T rank = card % 13
         if rank >= 9:
             return 10
         else:
@@ -191,3 +206,13 @@ cdef class DeadwoodCounterRevised:
     @staticmethod
     def bit_mask_to_array(bit_mask):
         return {bit for bit in range(52) if (bit_mask & (1LL << bit)) != 0}
+
+    cpdef INT64_T[:] suit_hands(DeadwoodCounterRevised self,INT32_T suit):
+        if suit==0:
+            return self.diamonds
+        elif suit==1:
+            return self.clubs
+        elif suit==2:
+            return self.hearts
+        elif suit==3:
+            return self.spades

@@ -9,5 +9,5 @@ extensions = [
 ]
 
 setup(
-    ext_modules=cythonize(extensions)
+    ext_modules=cythonize(extensions, annotate=True)
 )

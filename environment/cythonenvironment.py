@@ -18,7 +18,7 @@ class CythonEnvironment:
     GIN_BONUS = 25
     BIG_GIN_BONUS = 31
 
-    deadwood_counter = DeadwoodCounterRevised(np.asarray([0]))
+    deadwood_counter = DeadwoodCounterRevised(np.asarray([0], dtype=np.int64))
 
     def __init__(self, opponent_agent: BaseAgent):
         self.card_states = np.zeros((52,), np.int8)
