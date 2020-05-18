@@ -1,17 +1,12 @@
 # cython: profile=True,language_level=3
 
-import typing
-from typing import Tuple
-
 cimport cython
 import numpy as np
 cimport numpy as np
 from libc.string cimport memset
-
-from meld.meld import Meld
+from libc.limits cimport INT_MAX
 from meld.run import Run
 from meld.set import Set
-from libc.limits cimport INT_MAX
 
 INT32 = np.int
 
@@ -241,6 +236,7 @@ cdef class DeadwoodCounterRevised:
             INT64_T lowest_melds = 0LL
             INT32_T max_run_length
             INT64_T run_start_card, run_end_card
+
         for suit in range(4):
             if self.cards_left_list[suit] < 3:  # Not enough cards to build run
                 continue
@@ -283,18 +279,18 @@ cdef class DeadwoodCounterRevised:
         return run_length
 
     @staticmethod
-    def deadwood_val(INT32_T card):
+    def deadwood_val(INT32_T card) -> int:
         return DeadwoodCounterRevised.c_deadwood_val(card)
 
     @staticmethod
-    cdef INT64_T c_deadwood_val(INT32_T card):
-        cdef INT32_T rank = card % 13
+    cdef INT64_T c_deadwood_val(INT64_T card):
+        cdef INT64_T rank = card % 13
         if rank >= 9:
             return 10
         else:
             return rank + 1  # zero-indexed
 
-    cdef set bit_mask_to_array(DeadwoodCounterRevised self, INT64_T bit_mask):
+    cdef set bit_mask_to_array(self, INT64_T bit_mask):
         return {bit for bit in range(52) if (bit_mask & (1LL << bit)) != 0}
 
     """
@@ -305,22 +301,23 @@ cdef class DeadwoodCounterRevised:
     be encoded
     """
     @staticmethod
-    cdef INT64_T add_run(INT64_T current_mask,INT64_T start,INT64_T end):
-        current_mask|=(1LL<<((start//13*12)+start%13))
-        if(end-12)%13!=0:  # Is not a king
-            current_mask|=(1LL<<((end//13*12)+end%13))
+    cdef INT64_T add_run(INT64_T current_mask, INT64_T start, INT64_T end):
+        current_mask |= (1LL << ((start // 13 * 12) + start % 13))
+        if(end - 12) % 13 != 0:  # Is not a king
+            current_mask |= (1LL << ((end // 13 * 12)+ end % 13))
         return current_mask
 
     @staticmethod
-    cdef INT64_T add_set(INT64_T current_mask,INT64_T set_rank):
-        return current_mask|(1LL<<(48+set_rank))
+    cdef INT64_T add_set(INT64_T current_mask, INT64_T set_rank):
+        return current_mask | (1LL << (48 + set_rank))
 
     @staticmethod
     cdef list decode_meld_mask(INT64_T mask):
-        cdef bint run_started=False
-        cdef Py_ssize_t i,j
-        cdef INT32_T starting_card
-        cdef list melds=[]
+        cdef:
+            bint run_started = False
+            Py_ssize_t i,j
+            INT64_T starting_card
+            list melds = []
 
         for i in range(4):
             for j in range(12):
@@ -341,7 +338,7 @@ cdef class DeadwoodCounterRevised:
             mask>>=1
         return melds
 
-    cdef INT64_T[:] suit_hands(DeadwoodCounterRevised self,INT32_T suit):
+    cdef INT64_T[:] suit_hands(DeadwoodCounterRevised self, Py_ssize_t suit):
         if suit==0:
             return self.diamonds
         elif suit==1:

@@ -29,21 +29,21 @@ cdef class DeadwoodCounterRevised:
     cdef Py_ssize_t cards_left_to_idx(self)
     cdef void set_dp(self, INT64_T deadwood, INT64_T cards_left, INT64_T melds)
     cdef void build_from_dp(self)
-    cdef void build_result(self, INT64_T deadwood,INT64_T cards_left,INT64_T melds)
+    cdef void build_result(self, INT64_T deadwood, INT64_T cards_left, INT64_T melds)
     cdef void try_to_drop_card(self)
     cdef void try_to_build_set(self)
     cdef void try_to_build_run(self)
 
-    cdef INT64_T[:] suit_hands(DeadwoodCounterRevised self,INT32_T suit)
-    cdef INT32_T determine_max_run_length(DeadwoodCounterRevised self, INT32_T suit)
+    cdef INT64_T[:] suit_hands(self, Py_ssize_t suit)
+    cdef INT32_T determine_max_run_length(self, INT32_T suit)
 
     @staticmethod
-    cdef INT64_T c_deadwood_val(INT32_T card)
+    cdef INT64_T c_deadwood_val(INT64_T card)
     cdef set bit_mask_to_array(DeadwoodCounterRevised self, INT64_T bit_mask)
 
     @staticmethod
     cdef list decode_meld_mask(INT64_T mask)
     @staticmethod
-    cdef INT64_T add_set(INT64_T current_mask,INT64_T set_rank)
+    cdef INT64_T add_set(INT64_T current_mask, INT64_T set_rank)
     @staticmethod
-    cdef INT64_T add_run(INT64_T current_mask,INT64_T start,INT64_T end)
+    cdef INT64_T add_run(INT64_T current_mask, INT64_T start, INT64_T end)
