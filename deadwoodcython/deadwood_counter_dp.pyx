@@ -179,3 +179,15 @@ class DeadwoodCounterDP(DeadwoodCounter):
             else:
                 break
         return max_run_length
+
+    @staticmethod
+    def deadwood_val(card: int) -> int:
+        rank = card % 13
+        if rank >= 9:
+            return 10
+        else:
+            return rank + 1  # zero-indexed
+
+    @staticmethod
+    def bit_mask_to_array(bit_mask):
+        return {bit for bit in range(52) if (bit_mask & (1 << bit)) != 0}

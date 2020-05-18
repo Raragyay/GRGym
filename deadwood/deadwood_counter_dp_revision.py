@@ -11,7 +11,7 @@ from meld.run import Run
 from meld.set import Set
 
 
-class DeadwoodCounterDP(DeadwoodCounter):
+class DeadwoodCounterDPRevision(DeadwoodCounter):
     """
     DeadwoodCounterDP(hand: np.ndarray)
 
@@ -49,6 +49,7 @@ class DeadwoodCounterDP(DeadwoodCounter):
 
     def melds(self) -> Tuple[Meld, ...]:
         self.cards_left_list = [len(suit_hand) for suit_hand in self.suit_hands]
+        np.packbits
         return self.recurse()[2]
 
     def recurse(self) -> Tuple[int, int, Tuple[Meld, ...]]:
