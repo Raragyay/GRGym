@@ -6,6 +6,7 @@ import pytest
 from deadwood.deadwood_counter import DeadwoodCounter
 from deadwood.deadwood_counter_dp import DeadwoodCounterDP
 from deadwood.deadwood_counter_dp_revision import DeadwoodCounterDPRevision
+from deadwoodcython.deadwood_counter_revised import DeadwoodCounterRevised
 from meld.meld import Meld
 from meld.run import Run
 from meld.set import Set
@@ -14,7 +15,7 @@ from tests.utilities import idfn_name_id, idfn_name_id_expected, retrieve_file_t
     retrieve_nonzero_indices
 
 
-@pytest.fixture(params=[DeadwoodCounterDP, DeadwoodCounterDPRevision])
+@pytest.fixture(params=[DeadwoodCounterRevised])
 def deadwood_counter(request):
     return request.param
 

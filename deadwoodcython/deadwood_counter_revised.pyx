@@ -190,4 +190,4 @@ cdef class DeadwoodCounterRevised:
 
     @staticmethod
     def bit_mask_to_array(bit_mask):
-        return {bit for bit in range(52) if (bit_mask & (1 << bit)) != 0}
+        return {bit for bit in range(52) if (bit_mask & (1LL << bit)) != 0}
