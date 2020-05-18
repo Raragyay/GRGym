@@ -3,7 +3,7 @@ import numpy as np
 
 ctypedef np.int_t INT32_T
 ctypedef np.longlong_t INT64_T
-
+ctypedef void (*ACTION_FUNC)(DeadwoodCounterRevised)
 cdef class DeadwoodCounterRevised:
     """
     DeadwoodCounterDP(hand: np.ndarray)
@@ -17,18 +17,25 @@ cdef class DeadwoodCounterRevised:
     # cdef int[:] suit_hands[4]
     cdef dict deadwood_cards_dp, melds_dp, dp
     cdef INT32_T cards_left_list[4]
+    cdef INT64_T result[3]
+    cdef ACTION_FUNC actions[3]
     #
     # cpdef int deadwood(self)
     cdef void reset_cards_left_list(self)
     # cpdef set remaining_cards(self)
     # cpdef tuple melds(self)
+    cdef void recurse(self)
+    cdef void build_from_dp(self, cards_left_tuple)
+    cdef void build_result(self, INT64_T deadwood,INT64_T cards_left,INT64_T melds)
+    cdef void try_to_drop_card(self)
+    cdef void try_to_build_set(self)
+    cdef void try_to_build_run(self)
 
     cdef INT64_T[:] suit_hands(DeadwoodCounterRevised self,INT32_T suit)
     cdef INT32_T determine_max_run_length(DeadwoodCounterRevised self, INT32_T suit)
-    # cdef (INT32_T,INT64_T,INT64_T) try_to_build_run(self)
 
     @staticmethod
-    cdef INT32_T c_deadwood_val(INT32_T card)
+    cdef INT64_T c_deadwood_val(INT32_T card)
     cdef set bit_mask_to_array(DeadwoodCounterRevised self, INT64_T bit_mask)
 
     @staticmethod

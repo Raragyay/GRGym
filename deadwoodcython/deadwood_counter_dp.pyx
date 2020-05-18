@@ -59,12 +59,12 @@ class DeadwoodCounterDP(DeadwoodCounter):
         # noinspection PyTypeChecker
         cards_left_tuple: Tuple[int, int, int, int] = tuple(self.cards_left_list)
         if cards_left_tuple in self.dp:
-            return self.dp_retrieve(cards_left_tuple)
+            return self.build_from_dp(cards_left_tuple)
         if sum(cards_left_tuple) == 0:  # all cards used
             self.dp[cards_left_tuple] = 0
             self.deadwood_cards_dp[cards_left_tuple] = 0
             self.melds_dp[cards_left_tuple] = tuple()
-            return self.dp_retrieve(cards_left_tuple)
+            return self.build_from_dp(cards_left_tuple)
 
         lowest_deadwood = sys.maxsize
         lowest_deadwood_remaining_cards: int = 0
@@ -80,12 +80,12 @@ class DeadwoodCounterDP(DeadwoodCounter):
                 self.dp[cards_left_tuple] = lowest_deadwood
                 self.deadwood_cards_dp[cards_left_tuple] = lowest_deadwood_remaining_cards
                 self.melds_dp[cards_left_tuple] = lowest_deadwood_melds
-                return self.dp_retrieve(cards_left_tuple)
+                return self.build_from_dp(cards_left_tuple)
 
         self.dp[cards_left_tuple] = lowest_deadwood
         self.deadwood_cards_dp[cards_left_tuple] = lowest_deadwood_remaining_cards
         self.melds_dp[cards_left_tuple] = lowest_deadwood_melds
-        return self.dp_retrieve(cards_left_tuple)
+        return self.build_from_dp(cards_left_tuple)
 
     def dp_retrieve(self, cards_left_tuple) -> Tuple[int, int, Tuple[Meld, ...]]:
         return self.dp[cards_left_tuple], self.deadwood_cards_dp[cards_left_tuple], self.melds_dp[cards_left_tuple]

@@ -1,3 +1,4 @@
+# cython: profile=True,language_level=3
 import logging
 import typing
 from copy import deepcopy
