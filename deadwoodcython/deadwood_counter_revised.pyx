@@ -1,11 +1,13 @@
+# cython: profile=True
+
 import sys
 import typing
 from collections import Counter
 from typing import Tuple
 
-cimport numpy as np
 cimport cython
 import numpy as np
+cimport numpy as np
 
 from meld.meld import Meld
 from meld.run import Run
@@ -20,6 +22,7 @@ cdef class DeadwoodCounterRevised:
 
     Compiles the deadwood value for the given hand, the best set of melds, and the deadwood cards.
     """
+
 
     def __init__(self, hand: np.ndarray):
         """
@@ -104,7 +107,7 @@ cdef class DeadwoodCounterRevised:
             if cards_left == 0:
                 continue
             ignored_card = self.suit_hands(suit)[self.cards_left_list[suit] - 1]
-            ignored_card_deadwood = self.deadwood_val(ignored_card)
+            ignored_card_deadwood = DeadwoodCounterRevised.c_deadwood_val(ignored_card)
             self.cards_left_list[suit] -= 1  # Ignore card
             prospective_deadwood, prospective_remaining_cards, prospective_melds = self.recurse()
             if prospective_deadwood + ignored_card_deadwood < lowest_deadwood:
@@ -196,15 +199,19 @@ cdef class DeadwoodCounterRevised:
                 break
         return run_length
 
-    cpdef INT32_T deadwood_val(DeadwoodCounterRevised self, INT32_T card):
+    @staticmethod
+    def deadwood_val(INT32_T card):
+        return DeadwoodCounterRevised.c_deadwood_val(card)
+
+    @staticmethod
+    cdef INT32_T c_deadwood_val(INT32_T card):
         cdef INT32_T rank = card % 13
         if rank >= 9:
             return 10
         else:
             return rank + 1  # zero-indexed
 
-    @staticmethod
-    def bit_mask_to_array(bit_mask):
+    cdef set bit_mask_to_array(DeadwoodCounterRevised self, INT64_T bit_mask):
         return {bit for bit in range(52) if (bit_mask & (1LL << bit)) != 0}
 
     cpdef INT64_T[:] suit_hands(DeadwoodCounterRevised self,INT32_T suit):
