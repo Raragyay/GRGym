@@ -8,6 +8,8 @@ from typing import Tuple
 cimport cython
 import numpy as np
 cimport numpy as np
+from libc.string cimport memset
+from libc.stdlib cimport malloc, free
 
 from meld.meld import Meld
 from meld.run import Run
@@ -40,15 +42,12 @@ cdef class DeadwoodCounterRevised:
         self.hearts = self.hand[np.logical_and(self.hand >= 26, self.hand < 39)]
         self.spades = self.hand[self.hand >= 39]
 
-        # self.suit_hands = [self.diamonds, self.clubs, self.hearts, self.spades]
-
-        self.deadwood_cards_dp = dict()
-        self.melds_dp = dict()
-        self.dp = dict()
         self.cards_left_list = [0, 0, 0, 0]
         self.result = [0, 0, 0]
 
         self.actions = [self.try_to_build_set, self.try_to_build_run, self.try_to_drop_card]
+        self.noo = 0x3f3f3f3f3f3f3f3f
+        memset(self.dp, 0x3f, 14 * 14 * 14 * 14 * 3 * sizeof(INT64_T))
 
     def deadwood(self) -> int:
         self.reset_cards_left_list()
@@ -76,15 +75,12 @@ cdef class DeadwoodCounterRevised:
         :return:
         """
         # noinspection PyTypeChecker
-        cards_left_tuple = tuple(self.cards_left_list)
-        if cards_left_tuple in self.dp:
-            self.build_from_dp(cards_left_tuple)
+        if self.in_dp():
+            self.build_from_dp()
             return
-        if sum(cards_left_tuple) == 0:  # all cards used
-            self.dp[cards_left_tuple] = 0LL
-            self.deadwood_cards_dp[cards_left_tuple] = 0LL
-            self.melds_dp[cards_left_tuple] = 0LL
-            self.build_from_dp(cards_left_tuple)
+        if sum(self.cards_left_list) == 0:  # all cards used
+            self.set_dp(0LL, 0LL, 0LL)
+            self.build_from_dp()
             return
 
         cdef INT64_T lowest_deadwood = INT_MAX
@@ -102,21 +98,31 @@ cdef class DeadwoodCounterRevised:
                 lowest_deadwood_remaining_cards = prospective_remaining_cards
                 lowest_deadwood_melds = prospective_melds
             if lowest_deadwood == 0:
-                self.dp[cards_left_tuple] = lowest_deadwood
-                self.deadwood_cards_dp[cards_left_tuple] = lowest_deadwood_remaining_cards
-                self.melds_dp[cards_left_tuple] = lowest_deadwood_melds
-                self.build_from_dp(cards_left_tuple)
+                self.set_dp(lowest_deadwood, lowest_deadwood_remaining_cards, lowest_deadwood_melds)
+                self.build_from_dp()
                 return
 
-        self.dp[cards_left_tuple] = lowest_deadwood
-        self.deadwood_cards_dp[cards_left_tuple] = lowest_deadwood_remaining_cards
-        self.melds_dp[cards_left_tuple] = lowest_deadwood_melds
-        self.build_from_dp(cards_left_tuple)
+        self.set_dp(lowest_deadwood, lowest_deadwood_remaining_cards, lowest_deadwood_melds)
+        self.build_from_dp()
         return
 
-    cdef void build_from_dp(self, cards_left_tuple):
-        self.build_result(self.dp[cards_left_tuple], self.deadwood_cards_dp[
-            cards_left_tuple], self.melds_dp[cards_left_tuple])
+    cdef void set_dp(self, deadwood, cards_left, melds):
+        self.dp[self.idx() + 0] = deadwood
+        self.dp[self.idx() + 1] = cards_left
+        self.dp[self.idx() + 2] = melds
+
+    cdef Py_ssize_t idx(self):
+        return self.cards_left_list[0] * 14 * 14 * 14 * 3 + self.cards_left_list[1] * 14 * 14 * 3 + \
+               self.cards_left_list[2] * 14 * 3 + self.cards_left_list[3] * 3
+
+    cdef void build_from_dp(self):
+        self.build_result(
+            self.dp[self.idx() + 0],
+            self.dp[self.idx() + 1],
+            self.dp[self.idx() + 2])
+
+    cdef bint in_dp(self):
+        return self.dp[self.idx() + 0] != self.noo
 
     cdef void build_result(self, INT64_T deadwood, INT64_T cards_left, INT64_T melds):
         self.result[0] = deadwood

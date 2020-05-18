@@ -14,18 +14,21 @@ cdef class DeadwoodCounterRevised:
     """
     cdef np.ndarray hand
     cdef INT64_T[:] diamonds, clubs, hearts, spades
-    # cdef int[:] suit_hands[4]
-    cdef dict deadwood_cards_dp, melds_dp, dp
     cdef INT32_T cards_left_list[4]
     cdef INT64_T result[3]
     cdef ACTION_FUNC actions[3]
+    cdef INT64_T dp[14*14*14*14*3]
+    cdef INT64_T noo
     #
     # cpdef int deadwood(self)
     cdef void reset_cards_left_list(self)
     # cpdef set remaining_cards(self)
     # cpdef tuple melds(self)
     cdef void recurse(self)
-    cdef void build_from_dp(self, cards_left_tuple)
+    cdef bint in_dp(self)
+    cdef Py_ssize_t idx(self)
+    cdef void set_dp(self, deadwood, cards_left, melds)
+    cdef void build_from_dp(self)
     cdef void build_result(self, INT64_T deadwood,INT64_T cards_left,INT64_T melds)
     cdef void try_to_drop_card(self)
     cdef void try_to_build_set(self)
