@@ -2,7 +2,7 @@ from typing import Set
 
 import pytest
 
-from meld.run import Run
+from src.environment.run import Run
 
 
 def build_test_data():

@@ -1,7 +1,7 @@
 import numpy as np
 
-from environment.card_state import CardState
-from environment.hand import Hand
+from src.environment.card_state import CardState
+from src.environment.hand import Hand
 
 
 class Player:

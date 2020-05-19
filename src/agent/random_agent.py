@@ -1,6 +1,6 @@
 import numpy as np
 
-from agent.base_agent import BaseAgent
+from src.agent.base_agent import BaseAgent
 
 
 class RandomAgent(BaseAgent):

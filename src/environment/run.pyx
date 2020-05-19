@@ -1,17 +1,14 @@
-from typing import Set
+from meld cimport Meld
+from types cimport INT32_T
 
-from meld.meld import Meld
-
-
-class Run(Meld):
+cdef class Run(Meld):
     def __init__(self, start: int, end: int):
-        super().__init__()
         self.start = start
         self.end = end
         self.suit = start // 13
 
-    def connectable_cards(self) -> Set[int]:
-        result = set()
+    cpdef set connectable_cards(self):
+        cdef set result = set()
         if self.start % 13 != 0:  # not first card in suit
             result.add(self.start - 1)
         if (self.end + 1) % 13 != 0:  # not last card in suit

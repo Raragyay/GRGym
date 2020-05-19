@@ -3,17 +3,17 @@ from typing import Callable
 import numpy as np
 import pytest
 
-from agent.base_agent import BaseAgent
-from environment.action_result import ActionResult
-from environment.environment import Environment
-from environment.player import Player
+from src.agent.base_agent import BaseAgent
+from src.environment.action_result import ActionResult
+from src.environment.cythonenvironment import CythonEnvironment
+from src.environment.player import Player
 from tests.utilities import idfn_id_expected, retrieve_boolean, retrieve_file_tests, retrieve_float_vector, \
     retrieve_int, retrieve_nonzero_indices
 
 
 @pytest.fixture
 def test_env():
-    return Environment(BaseAgent())  # TODO change to testing agent maybe?
+    return CythonEnvironment(BaseAgent())  # TODO change to testing agent maybe?
 
 
 @pytest.fixture
@@ -35,7 +35,8 @@ def player_with_cards(base_player: Player):
 @pytest.mark.parametrize("cards_in_hand,expected", retrieve_file_tests(retrieve_nonzero_indices, retrieve_boolean,
                                                                        idfn_id_expected,
                                                                        file_names=["environment/can_knock_cases.txt"]))
-def test_can_knock(test_env: Environment, player_with_cards: Callable[[np.ndarray], Player], cards_in_hand: np.ndarray,
+def test_can_knock(test_env: CythonEnvironment, player_with_cards: Callable[[np.ndarray], Player],
+                   cards_in_hand: np.ndarray,
                    expected: bool):
     assert test_env.can_knock(player_with_cards(cards_in_hand)) == expected
 
@@ -43,7 +44,8 @@ def test_can_knock(test_env: Environment, player_with_cards: Callable[[np.ndarra
 @pytest.mark.parametrize("cards_in_hand,expected", retrieve_file_tests(retrieve_nonzero_indices, retrieve_boolean,
                                                                        idfn_id_expected,
                                                                        file_names=["environment/is_gin_cases.txt"]))
-def test_is_gin(test_env: Environment, player_with_cards: Callable[[np.ndarray], Player], cards_in_hand: np.ndarray,
+def test_is_gin(test_env: CythonEnvironment, player_with_cards: Callable[[np.ndarray], Player],
+                cards_in_hand: np.ndarray,
                 expected: bool):
     assert test_env.is_gin(player_with_cards(cards_in_hand)) == expected
 
@@ -51,11 +53,11 @@ def test_is_gin(test_env: Environment, player_with_cards: Callable[[np.ndarray],
 @pytest.mark.parametrize("actions,expected", retrieve_file_tests(retrieve_float_vector, retrieve_boolean,
                                                                  idfn_id_expected,
                                                                  file_names=["environment/wants_to_knock_cases.txt"]))
-def test_wants_to_knock(test_env: Environment, actions: np.ndarray, expected: bool):
+def test_wants_to_knock(test_env: CythonEnvironment, actions: np.ndarray, expected: bool):
     assert test_env.wants_to_knock(actions) == expected
 
 
-def test_update_score(test_env: Environment, base_player: Player):
+def test_update_score(test_env: CythonEnvironment, base_player: Player):
     score_limit = 100
     test_env.SCORE_LIMIT = score_limit
     assert test_env.update_score(base_player, score_limit // 2) == ActionResult.WON_HAND
@@ -67,8 +69,8 @@ def test_update_score(test_env: Environment, base_player: Player):
 
 @pytest.mark.parametrize("cards_in_hand,deadwood", retrieve_file_tests(retrieve_nonzero_indices, retrieve_int,
                                                                        idfn_id_expected,
-                                                                       file_names=["deadwood/td_10.txt"]))
-def test_score_gin(test_env: Environment, base_player: Player, player_with_cards: Callable[[np.ndarray], Player],
+                                                                       file_names=["environment/deadwood/td_10.txt"]))
+def test_score_gin(test_env: CythonEnvironment, base_player: Player, player_with_cards: Callable[[np.ndarray], Player],
                    cards_in_hand: np.ndarray, deadwood: int):
     test_env.player_1 = base_player
     test_env.player_2 = player_with_cards(cards_in_hand)

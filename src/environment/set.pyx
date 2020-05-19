@@ -1,14 +1,11 @@
-import typing
+from meld cimport Meld
 
-from meld.meld import Meld
-
-
-class Set(Meld):
+cdef class Set(Meld):
     def __init__(self, rank: int):
         super().__init__()
         self.rank = rank
 
-    def connectable_cards(self) -> typing.Set[int]:
+    cpdef set connectable_cards(self):
         return {suit * 13 + self.rank for suit in range(4)}
 
     def __hash__(self):

@@ -3,8 +3,8 @@ from copy import deepcopy
 import numpy as np
 import pytest
 
-from environment.card_state import CardState
-from environment.player import Player
+from src.environment.card_state import CardState
+from src.environment.player import Player
 
 
 @pytest.fixture

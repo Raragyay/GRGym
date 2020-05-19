@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from environment.hand import Hand
+from src.environment.hand import Hand
 
 
 @pytest.fixture

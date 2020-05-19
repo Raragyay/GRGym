@@ -1,8 +1,8 @@
 import numpy as np
 from scipy.signal import convolve2d
 
-from agent.base_agent import BaseAgent
-from environment.card_state import CardState
+from src.agent.base_agent import BaseAgent
+from src.environment.card_state import CardState
 
 
 class HandBuiltAgent(BaseAgent):

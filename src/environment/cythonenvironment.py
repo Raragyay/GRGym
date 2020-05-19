@@ -5,20 +5,19 @@ from copy import deepcopy
 from typing import Dict, List, Tuple
 
 import numpy as np
-from deadwoodcython.deadwood_counter_revised import DeadwoodCounterRevised
 
-from agent.base_agent import BaseAgent
-from environment.action_result import ActionResult
-from environment.player import Player
-from meld.run import Run
-from meld.set import Set
+from src.agent.base_agent import BaseAgent
+from src.environment.action_result import ActionResult
+from src.environment.player import Player
+from src.environment.run import Run
+from src.environment.set import Set
+from src.environment.deadwood_counter_revised import DeadwoodCounterRevised
 
 
 class CythonEnvironment:
     SCORE_LIMIT = 100
     GIN_BONUS = 25
     BIG_GIN_BONUS = 31
-
 
     def __init__(self, opponent_agent: BaseAgent):
         self.card_states = np.zeros((52,), np.int8)

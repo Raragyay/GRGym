@@ -1,8 +1,6 @@
 cimport numpy as np
 import numpy as np
-
-ctypedef np.int_t INT32_T
-ctypedef np.longlong_t INT64_T
+from types cimport INT64_T, INT32_T
 ctypedef void (*ACTION_FUNC)(DeadwoodCounterRevised)
 cdef class DeadwoodCounterRevised:
     """
@@ -29,13 +27,13 @@ cdef class DeadwoodCounterRevised:
     cdef Py_ssize_t cards_left_to_idx(self)
     cdef void set_dp(self, INT64_T deadwood, INT64_T cards_left, INT64_T melds)
     cdef void build_from_dp(self)
-    cdef void build_result(self, INT64_T deadwood, INT64_T cards_left, INT64_T melds)
+    cdef void build_result(self, INT64_T deadwood,INT64_T cards_left,INT64_T melds)
     cdef void try_to_drop_card(self)
     cdef void try_to_build_set(self)
     cdef void try_to_build_run(self)
 
-    cdef INT64_T[:] suit_hands(self, Py_ssize_t suit)
-    cdef INT32_T determine_max_run_length(self, INT32_T suit)
+    cdef INT64_T[:] suit_hands(DeadwoodCounterRevised self,Py_ssize_t suit)
+    cdef INT32_T determine_max_run_length(DeadwoodCounterRevised self, INT32_T suit)
 
     @staticmethod
     cdef INT64_T c_deadwood_val(INT64_T card)

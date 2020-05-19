@@ -1,4 +1,4 @@
-from meld.set import Set
+from src.environment.set import Set
 
 
 def test_connectable_cards():

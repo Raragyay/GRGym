@@ -1,6 +1,6 @@
 import pytest
 
-from meld.meld import Meld
+from src.environment.meld import Meld
 
 
 def test_connectable_cards():

@@ -5,10 +5,9 @@ import numpy as np
 cimport numpy as np
 from libc.string cimport memset
 from libc.limits cimport INT_MAX
-from meld.run import Run
-from meld.set import Set
-
-INT32 = np.int
+from run cimport Run
+from set cimport Set
+from types cimport INT32_T, INT64_T
 
 cdef class DeadwoodCounterRevised:
     """
@@ -18,7 +17,6 @@ cdef class DeadwoodCounterRevised:
 
     Compiles the deadwood value for the given hand, the best set of melds, and the deadwood cards.
     """
-
 
     def __init__(self, hand: np.ndarray):
         """
