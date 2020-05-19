@@ -23,7 +23,7 @@ def test_reset(test_player: Player):
         np.testing.assert_array_equal(test_player.hand_mask(), np.zeros(52))
     with pytest.raises(AssertionError):
         np.testing.assert_array_equal(test_player.card_states, np.zeros(52))
-    test_player.reset()
+    test_player.reset_hand()
     np.testing.assert_array_equal(test_player.hand_mask(), np.zeros(52))
     np.testing.assert_array_equal(test_player.card_states, np.zeros(52))
 
@@ -142,3 +142,5 @@ def test_eq_cards(test_player: Player):
     assert not test_player == temp_player
     test_player.score = 5
     assert test_player == temp_player
+
+# TODO ADD EMPTY DISCARD TESTS

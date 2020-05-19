@@ -1,7 +1,4 @@
-from enum import IntEnum
-
-
-class Rank(IntEnum):
+cpdef enum Rank:
     ACE = 0
     TWO = 1
     THREE = 2
@@ -16,8 +13,7 @@ class Rank(IntEnum):
     QUEEN = 11
     KING = 12
 
-
-class Suit(IntEnum):
+cpdef enum Suit:
     DIAMONDS = 0
     CLUBS = 1
     HEARTS = 2

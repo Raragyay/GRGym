@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from src.environment.hand import Hand
+from src.environment.hand import Hand, suit_symbols
 
 
 @pytest.fixture
@@ -18,12 +18,12 @@ def idfn_card_shorthand(val):
 
 
 @pytest.mark.parametrize("card_val,expected",
-                         zip((1, 5, 9, 23, 46, 51), (f"2{Hand.suit_symbols[0]}",
-                                                     f"6{Hand.suit_symbols[0]}",
-                                                     f"10{Hand.suit_symbols[0]}",
-                                                     f"J{Hand.suit_symbols[1]}",
-                                                     f"8{Hand.suit_symbols[3]}",
-                                                     f"K{Hand.suit_symbols[3]}")), ids=idfn_card_shorthand)
+                         zip((1, 5, 9, 23, 46, 51), (f"2{suit_symbols[0]}",
+                                                     f"6{suit_symbols[0]}",
+                                                     f"10{suit_symbols[0]}",
+                                                     f"J{suit_symbols[1]}",
+                                                     f"8{suit_symbols[3]}",
+                                                     f"K{suit_symbols[3]}")), ids=idfn_card_shorthand)
 def test_card_shorthand(card_val: int, expected: str):
     assert Hand.card_shorthand(card_val) == expected
 

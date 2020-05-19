@@ -1,7 +1,4 @@
-from enum import IntEnum
-
-
-class CardState(IntEnum):
+cpdef enum CardState:
     UNKNOWN = 0
     MINE_FROM_DECK = 1
     MINE_FROM_DISCARD = 2

@@ -8,7 +8,7 @@ import numpy as np
 
 from src.agent.base_agent import BaseAgent
 from src.environment.action_result import ActionResult
-from src.environment.player import Player
+from src.environment.player import Player, NO_CARD
 from src.environment.run import Run
 from src.environment.set import Set
 from src.environment.deadwood_counter_revised import DeadwoodCounterRevised
@@ -36,8 +36,8 @@ class CythonEnvironment:
         :return:
         """
         self.card_states = np.zeros((52,), np.int8)
-        self.player_1.reset()
-        self.player_2.reset()
+        self.player_1.reset_hand()
+        self.player_2.reset_hand()
         self.deck = np.arange(52)
         np.random.shuffle(self.deck)
         self.discard_pile = []
@@ -129,7 +129,7 @@ class CythonEnvironment:
 
     def draw_from_discard(self, player: Player):
         drawn_card: int = self.discard_pile.pop()
-        new_top_discard: int = None if self.discard_pile_is_empty() else self.discard_pile[-1]
+        new_top_discard: int = NO_CARD() if self.discard_pile_is_empty() else self.discard_pile[-1]
         player.add_card_from_discard(drawn_card, new_top_discard)
         self.opponents(player).report_opponent_drew_from_discard(drawn_card, new_top_discard)
 
@@ -156,7 +156,7 @@ class CythonEnvironment:
         return observation
 
     def discard_card(self, player: Player, card_to_discard: int):
-        previous_top = None if self.discard_pile_is_empty() else self.discard_pile[-1]
+        previous_top = NO_CARD() if self.discard_pile_is_empty() else self.discard_pile[-1]
         self.discard_pile.append(card_to_discard)
         player.discard_card(card_to_discard, previous_top)
         self.opponents(player).report_opponent_discarded(card_to_discard, previous_top)

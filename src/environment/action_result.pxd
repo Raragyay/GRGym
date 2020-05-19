@@ -1,7 +1,4 @@
-from enum import IntEnum
-
-
-class ActionResult(IntEnum):
+cpdef enum ActionResult:
     LOST_MATCH = -2
     LOST_HAND = -1
     NO_CHANGE = 0

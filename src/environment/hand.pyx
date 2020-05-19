@@ -1,29 +1,38 @@
 import numpy as np
 
 from src.environment.card_enums import Rank, Suit
+from types cimport INT64_T, BOOL_T
+from libc.string cimport memset
 
-
-class Hand:
+suit_symbols = ['D', 'C', 'H', 'S']
+rank_symbols = ['A', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K']
+cdef class Hand:
     """
     A representation of the cards in a hand. Stored in a boolean array.
     Ordered by Suit, then by Rank. For example, Ace of Clubs is the 14th card (in position 13)
     """
-    suit_symbols = ['D', 'C', 'H', 'S']
-    rank_symbols = ['A', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K']
 
     def __init__(self):
-        self.cards: np.ndarray((52,), np.bool) = np.zeros(52, np.bool)
+        self.__cards = np.zeros(52, dtype=np.bool)
 
-    def has_card(self, card_val) -> bool:
-        return self.cards[card_val]
+    @property
+    def cards(self):
+        return np.asarray(self.__cards, dtype=np.bool)
 
-    def add_card(self, card_val: int):
-        self.cards[card_val] = True
+    @cards.setter
+    def cards(self, new_arr):
+        self.__cards = new_arr
 
-    def remove_card(self, card_val: int):
-        self.cards[card_val] = False
+    cpdef bint has_card(self, INT64_T card_val):
+        return self.__cards[card_val]
 
-    def card_list(self) -> np.ndarray:
+    cpdef void add_card(self, INT64_T card_val):
+        self.__cards[card_val] = True
+
+    cpdef void remove_card(self, INT64_T card_val):
+        self.__cards[card_val] = False
+
+    cpdef np.ndarray card_list(self):
         return np.nonzero(self.cards)[0]
 
     def __str__(self):
@@ -44,7 +53,12 @@ class Hand:
     @classmethod
     def card_shorthand(cls, card_val: int):
         card = divmod(card_val, 13)
-        return f"{cls.rank_symbols[card[1]]}{cls.suit_symbols[card[0]]}"
+        return f"{rank_symbols[card[1]]}{suit_symbols[card[0]]}"
 
     def __eq__(self, other):
         return isinstance(other, Hand) and np.array_equal(self.cards, other.cards)
+
+    def __deepcopy__(self, memodict={}):
+        new_hand = Hand()
+        new_hand.cards = self.cards.copy()
+        return new_hand

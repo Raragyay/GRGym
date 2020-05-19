@@ -1,5 +1,3 @@
-# cython: profile=True,language_level=3
-
 cimport cython
 import numpy as np
 cimport numpy as np
@@ -302,7 +300,7 @@ cdef class DeadwoodCounterRevised:
     cdef INT64_T add_run(INT64_T current_mask, INT64_T start, INT64_T end):
         current_mask |= (1LL << ((start // 13 * 12) + start % 13))
         if(end - 12) % 13 != 0:  # Is not a king
-            current_mask |= (1LL << ((end // 13 * 12)+ end % 13))
+            current_mask |= (1LL << ((end // 13 * 12) + end % 13))
         return current_mask
 
     @staticmethod
@@ -313,35 +311,35 @@ cdef class DeadwoodCounterRevised:
     cdef list decode_meld_mask(INT64_T mask):
         cdef:
             bint run_started = False
-            Py_ssize_t i,j
+            Py_ssize_t i, j
             INT64_T starting_card
             list melds = []
 
         for i in range(4):
             for j in range(12):
-                if mask&1==1:  # If run is set
+                if mask & 1 == 1:  # If run is set
                     if not run_started:
                         starting_card = i * 13 + j
                         run_started = True
                     else:
-                        run_started=False
-                        melds.append(Run(starting_card,i*13+j))
-                mask>>=1
+                        run_started = False
+                        melds.append(Run(starting_card, i * 13 + j))
+                mask >>= 1
             if run_started:
-                run_started=False
-                melds.append(Run(starting_card,i*13+j))
+                run_started = False
+                melds.append(Run(starting_card, i * 13 + j))
         for i in range(13):
-            if mask&1==1:
+            if mask & 1 == 1:
                 melds.append(Set(i))
-            mask>>=1
+            mask >>= 1
         return melds
 
     cdef INT64_T[:] suit_hands(DeadwoodCounterRevised self, Py_ssize_t suit):
-        if suit==0:
+        if suit == 0:
             return self.diamonds
-        elif suit==1:
+        elif suit == 1:
             return self.clubs
-        elif suit==2:
+        elif suit == 2:
             return self.hearts
-        elif suit==3:
+        elif suit == 3:
             return self.spades
