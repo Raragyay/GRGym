@@ -13,7 +13,7 @@ from .player cimport Player, NO_CARD
 from .player import Player
 from .run cimport Run
 from .set cimport Set
-from .deadwood_counter_revised cimport DeadwoodCounterRevised
+from .deadwood_counter cimport DeadwoodCounter
 
 @cython.final
 cdef class CythonEnvironment:
@@ -164,10 +164,10 @@ cdef class CythonEnvironment:
         self.opponents(player).report_opponent_discarded(card_to_discard, previous_top)
 
     def try_to_knock(self, player) -> int:
-        deadwood_counter = DeadwoodCounterRevised(player.card_list())
+        deadwood_counter = DeadwoodCounter(player.card_list())
         knocking_player_deadwood = deadwood_counter.deadwood()
         knocking_player_melds = deadwood_counter.melds()
-        deadwood_counter = DeadwoodCounterRevised(self.opponents(player).card_list())
+        deadwood_counter = DeadwoodCounter(self.opponents(player).card_list())
         opponent_deadwood = deadwood_counter.deadwood()
         opponent_remaining_cards = set(deadwood_counter.remaining_cards())
 
@@ -218,11 +218,11 @@ cdef class CythonEnvironment:
             return -25 - (knocking_player_deadwood - opponent_deadwood)
 
     def score_big_gin(self, player) -> ActionResult:
-        score_delta = DeadwoodCounterRevised(self.opponents(player).card_list()).deadwood() + self.BIG_GIN_BONUS
+        score_delta = DeadwoodCounter(self.opponents(player).card_list()).deadwood() + self.BIG_GIN_BONUS
         return self.update_score(player, score_delta)
 
     def score_gin(self, player):
-        score_delta = DeadwoodCounterRevised(self.opponents(player).card_list()).deadwood() + self.GIN_BONUS
+        score_delta = DeadwoodCounter(self.opponents(player).card_list()).deadwood() + self.GIN_BONUS
         return self.update_score(player, score_delta)
 
     def update_score(self, player, score_delta: int) -> ActionResult:
@@ -246,8 +246,8 @@ cdef class CythonEnvironment:
 
     @staticmethod
     cdef bint c_is_gin(Player player):
-        # print(DeadwoodCounterRevised(player.card_list()).deadwood())
-        return DeadwoodCounterRevised(player.card_list()).deadwood() == 0
+        # print(DeadwoodCounter(player.card_list()).deadwood())
+        return DeadwoodCounter(player.card_list()).deadwood() == 0
 
     @staticmethod
     def can_knock(player):  #Player class, cannot type hint because of type errors with testing
@@ -255,7 +255,7 @@ cdef class CythonEnvironment:
 
     @staticmethod
     cdef bint c_can_knock(Player player):
-        return DeadwoodCounterRevised(player.card_list()).deadwood() <= 10
+        return DeadwoodCounter(player.card_list()).deadwood() <= 10
 
     cdef Player opponents(self, Player player):
         """

@@ -1,8 +1,8 @@
 cimport numpy as np
 import numpy as np
 from .types cimport INT64_T, INT32_T
-ctypedef void (*ACTION_FUNC)(DeadwoodCounterRevised)
-cdef class DeadwoodCounterRevised:
+ctypedef void (*ACTION_FUNC)(DeadwoodCounter)
+cdef class DeadwoodCounter:
     """
     DeadwoodCounterDP(hand: np.ndarray)
 
@@ -32,12 +32,12 @@ cdef class DeadwoodCounterRevised:
     cdef void try_to_build_set(self)
     cdef void try_to_build_run(self)
 
-    cdef INT64_T[:] suit_hands(DeadwoodCounterRevised self,Py_ssize_t suit)
-    cdef INT32_T determine_max_run_length(DeadwoodCounterRevised self, INT32_T suit)
+    cdef INT64_T[:] suit_hands(DeadwoodCounter self,Py_ssize_t suit)
+    cdef INT32_T determine_max_run_length(DeadwoodCounter self, INT32_T suit)
 
     @staticmethod
     cdef INT64_T c_deadwood_val(INT64_T card)
-    cdef set bit_mask_to_array(DeadwoodCounterRevised self, INT64_T bit_mask)
+    cdef set bit_mask_to_array(DeadwoodCounter self, INT64_T bit_mask)
 
     @staticmethod
     cdef list decode_meld_mask(INT64_T mask)

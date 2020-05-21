@@ -8,7 +8,7 @@ from .set cimport Set
 from .types cimport INT32_T, INT64_T
 
 @cython.final
-cdef class DeadwoodCounterRevised:
+cdef class DeadwoodCounter:
     """
     DeadwoodCounterDP(hand: np.ndarray)
 
@@ -54,7 +54,7 @@ cdef class DeadwoodCounterRevised:
     cpdef list melds(self):
         self.reset_cards_left_list()
         self.recurse()
-        return DeadwoodCounterRevised.decode_meld_mask(self.result[2])
+        return DeadwoodCounter.decode_meld_mask(self.result[2])
 
     cdef void recurse(self):
         """
@@ -134,7 +134,7 @@ cdef class DeadwoodCounterRevised:
             if cards_left == 0:
                 continue
             ignored_card = self.suit_hands(suit)[self.cards_left_list[suit] - 1]
-            ignored_card_deadwood = DeadwoodCounterRevised.c_deadwood_val(ignored_card)
+            ignored_card_deadwood = DeadwoodCounter.c_deadwood_val(ignored_card)
             self.cards_left_list[suit] -= 1  # Ignore card
 
             self.recurse()
@@ -196,7 +196,7 @@ cdef class DeadwoodCounterRevised:
             deadwood = self.result[0]
             remaining_cards = self.result[1]
             melds = self.result[2]
-            melds = DeadwoodCounterRevised.add_set(melds, max_freq_rank)
+            melds = DeadwoodCounter.add_set(melds, max_freq_rank)
             self.build_result(deadwood, remaining_cards, melds)
         else:  # all suits have same rank
             self.recurse()
@@ -204,7 +204,7 @@ cdef class DeadwoodCounterRevised:
             lowest_remaining_cards = self.result[1]
             lowest_melds = self.result[2]
 
-            lowest_melds = DeadwoodCounterRevised.add_set(lowest_melds, max_freq_rank)
+            lowest_melds = DeadwoodCounter.add_set(lowest_melds, max_freq_rank)
 
             for excluded_suit in range(4):
                 self.cards_left_list[excluded_suit] += 1  # Restore card
@@ -217,7 +217,7 @@ cdef class DeadwoodCounterRevised:
                 if prospective_deadwood < lowest_deadwood:
                     lowest_deadwood = prospective_deadwood
                     lowest_remaining_cards = prospective_remaining_cards
-                    lowest_melds = DeadwoodCounterRevised.add_set(prospective_melds, max_freq_rank)
+                    lowest_melds = DeadwoodCounter.add_set(prospective_melds, max_freq_rank)
                 self.cards_left_list[excluded_suit] -= 1  # Use card
 
             self.build_result(lowest_deadwood, lowest_remaining_cards, lowest_melds)
@@ -254,14 +254,14 @@ cdef class DeadwoodCounterRevised:
                     lowest_deadwood = prospective_deadwood
                     lowest_remaining_cards = prospective_remaining_cards
                     run_start_card = self.suit_hands(suit)[self.cards_left_list[suit]]
-                    lowest_melds = DeadwoodCounterRevised.add_run(prospective_melds, run_start_card, run_end_card)
+                    lowest_melds = DeadwoodCounter.add_run(prospective_melds, run_start_card, run_end_card)
             self.cards_left_list[suit] += max_run_length
 
         self.build_result(lowest_deadwood, lowest_remaining_cards, lowest_melds)
         return
 
     @cython.boundscheck(False) # turn off bounds-checking for entire function
-    cdef INT32_T determine_max_run_length(DeadwoodCounterRevised self, INT32_T suit):
+    cdef INT32_T determine_max_run_length(DeadwoodCounter self, INT32_T suit):
         cdef INT64_T[:] suit_hand = self.suit_hands(suit)
         cdef INT32_T max_run_length = self.cards_left_list[suit] # This will always be >=3
         cdef INT64_T prev_rank = suit_hand[max_run_length - 1] % 13
@@ -277,7 +277,7 @@ cdef class DeadwoodCounterRevised:
 
     @staticmethod
     def deadwood_val(INT32_T card) -> int:
-        return DeadwoodCounterRevised.c_deadwood_val(card)
+        return DeadwoodCounter.c_deadwood_val(card)
 
     @staticmethod
     cdef inline INT64_T c_deadwood_val(INT64_T card):
@@ -335,7 +335,7 @@ cdef class DeadwoodCounterRevised:
             mask >>= 1
         return melds
 
-    cdef INT64_T[:] suit_hands(DeadwoodCounterRevised self, Py_ssize_t suit):
+    cdef INT64_T[:] suit_hands(DeadwoodCounter self, Py_ssize_t suit):
         if suit == 0:
             return self.diamonds
         elif suit == 1:
