@@ -3,10 +3,10 @@ import typing
 import numpy as np
 import pytest
 
-from src.environment.deadwood_counter_revised import DeadwoodCounterRevised
-from src.environment.meld import Meld
-from src.environment.run import Run
-from src.environment.set import Set
+from GRGym.environment.deadwood_counter_revised import DeadwoodCounterRevised
+from GRGym.environment.meld import Meld
+from GRGym.environment.run import Run
+from GRGym.environment.set import Set
 from tests.utilities import idfn_name_id, idfn_name_id_expected, retrieve_file_tests, retrieve_int, \
     retrieve_int_vector, \
     retrieve_nonzero_indices

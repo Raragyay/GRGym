@@ -1,4 +1,4 @@
-from types cimport INT64_T,BOOL_T
+from .types cimport INT64_T, BOOL_T
 cimport numpy as np
 import numpy as np
 

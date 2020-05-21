@@ -1,4 +1,4 @@
-from meld cimport Meld
+from .meld cimport Meld
 
 cdef class Set(Meld):
     def __init__(self, rank: int):
@@ -18,4 +18,8 @@ cdef class Set(Meld):
         return self.__str__()  # TODO MAKE NICER
 
     def __eq__(self, other):
-        return isinstance(other, Set) and self.rank == other.rank
+        try:
+            casted = <Set> other
+            return self.rank == casted.rank
+        finally:
+            pass

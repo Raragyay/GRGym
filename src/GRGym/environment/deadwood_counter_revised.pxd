@@ -1,6 +1,6 @@
 cimport numpy as np
 import numpy as np
-from types cimport INT64_T, INT32_T
+from .types cimport INT64_T, INT32_T
 ctypedef void (*ACTION_FUNC)(DeadwoodCounterRevised)
 cdef class DeadwoodCounterRevised:
     """

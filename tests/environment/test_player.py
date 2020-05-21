@@ -3,8 +3,8 @@ from copy import deepcopy
 import numpy as np
 import pytest
 
-from src.environment.card_state import CardState
-from src.environment.player import Player
+from GRGym.environment.card_state import CardState
+from GRGym.environment.player import Player
 
 
 @pytest.fixture

@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from src.environment.hand import Hand, suit_symbols
+from GRGym.environment.hand import Hand, suit_symbols
 
 
 @pytest.fixture

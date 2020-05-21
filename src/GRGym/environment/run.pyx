@@ -1,5 +1,4 @@
-from meld cimport Meld
-from types cimport INT32_T
+from .meld cimport Meld
 
 cdef class Run(Meld):
     def __init__(self, start: int, end: int):
@@ -25,4 +24,8 @@ cdef class Run(Meld):
         return self.__str__()  # TODO MAKE NICER
 
     def __eq__(self, other):
-        return isinstance(other, Run) and self.start == other.start and self.end == other.end
+        try:
+            casted = <Run> other
+            return self.start == casted.start and self.end == casted.end
+        finally:
+            pass

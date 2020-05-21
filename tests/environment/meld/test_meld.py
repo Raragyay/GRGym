@@ -1,6 +1,6 @@
 import pytest
 
-from src.environment.meld import Meld
+from GRGym.environment.meld import Meld
 
 
 def test_connectable_cards():

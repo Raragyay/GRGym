@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from src.agent.base_agent import BaseAgent
+from GRGym.agent.base_agent import BaseAgent
 
 
 def test_act():

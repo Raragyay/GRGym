@@ -3,10 +3,11 @@ import numpy as np
 cimport numpy as np
 from libc.string cimport memset
 from libc.limits cimport INT_MAX
-from run cimport Run
-from set cimport Set
-from types cimport INT32_T, INT64_T
+from .run cimport Run
+from .set cimport Set
+from .types cimport INT32_T, INT64_T
 
+@cython.final
 cdef class DeadwoodCounterRevised:
     """
     DeadwoodCounterDP(hand: np.ndarray)
@@ -279,7 +280,7 @@ cdef class DeadwoodCounterRevised:
         return DeadwoodCounterRevised.c_deadwood_val(card)
 
     @staticmethod
-    cdef INT64_T c_deadwood_val(INT64_T card):
+    cdef inline INT64_T c_deadwood_val(INT64_T card):
         cdef INT64_T rank = card % 13
         if rank >= 9:
             return 10

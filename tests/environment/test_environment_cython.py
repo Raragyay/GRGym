@@ -3,10 +3,10 @@ from typing import Callable
 import numpy as np
 import pytest
 
-from src.agent.base_agent import BaseAgent
-from src.environment.action_result import ActionResult
-from src.environment.cythonenvironment import CythonEnvironment
-from src.environment.player import Player
+from GRGym.agent import BaseAgent
+from GRGym.environment.action_result import ActionResult
+from GRGym.environment.cythonenvironment import CythonEnvironment
+from GRGym.environment.player import Player
 from tests.utilities import idfn_id_expected, retrieve_boolean, retrieve_file_tests, retrieve_float_vector, \
     retrieve_int, retrieve_nonzero_indices
 
@@ -38,7 +38,7 @@ def player_with_cards(base_player: Player):
 def test_can_knock(test_env: CythonEnvironment, player_with_cards: Callable[[np.ndarray], Player],
                    cards_in_hand: np.ndarray,
                    expected: bool):
-    assert test_env.can_knock(player_with_cards(cards_in_hand)) == expected
+    assert CythonEnvironment.can_knock(player_with_cards(cards_in_hand)) == expected
 
 
 @pytest.mark.parametrize("cards_in_hand,expected", retrieve_file_tests(retrieve_nonzero_indices, retrieve_boolean,
@@ -47,7 +47,7 @@ def test_can_knock(test_env: CythonEnvironment, player_with_cards: Callable[[np.
 def test_is_gin(test_env: CythonEnvironment, player_with_cards: Callable[[np.ndarray], Player],
                 cards_in_hand: np.ndarray,
                 expected: bool):
-    assert test_env.is_gin(player_with_cards(cards_in_hand)) == expected
+    assert CythonEnvironment.is_gin(player_with_cards(cards_in_hand)) == expected
 
 
 @pytest.mark.parametrize("actions,expected", retrieve_file_tests(retrieve_float_vector, retrieve_boolean,
@@ -58,8 +58,7 @@ def test_wants_to_knock(test_env: CythonEnvironment, actions: np.ndarray, expect
 
 
 def test_update_score(test_env: CythonEnvironment, base_player: Player):
-    score_limit = 100
-    test_env.SCORE_LIMIT = score_limit
+    score_limit = test_env.SCORE_LIMIT
     assert test_env.update_score(base_player, score_limit // 2) == ActionResult.WON_HAND
     assert test_env.update_score(base_player, score_limit) == ActionResult.WON_MATCH
     assert base_player.score >= score_limit

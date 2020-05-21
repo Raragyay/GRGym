@@ -1,9 +1,9 @@
 import numpy as np
 
-from card_state cimport CardState
-from hand import Hand
-from hand cimport Hand
-from types cimport INT8_T
+from .card_state cimport CardState
+from .hand import Hand
+from .hand cimport Hand
+from .types cimport INT8_T
 
 cdef class Player:
     def __init__(self):
@@ -99,3 +99,6 @@ cdef class Player:
         new_player.card_states = self.card_states.copy()
         new_player.score = self.score
         return new_player
+
+    def recast(self):  #For testing
+        return <Player?> self
