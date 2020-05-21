@@ -3,7 +3,7 @@ import typing
 import numpy as np
 import pytest
 
-from GRGym.environment.deadwood_counter import DeadwoodCounter
+from GRGym.testing.deadwood_counter import DeadwoodCounter as TestDC
 from GRGym.environment.meld import Meld
 from GRGym.environment.run import Run
 from GRGym.environment.set import Set
@@ -12,7 +12,7 @@ from tests.utilities import idfn_name_id, idfn_name_id_expected, retrieve_file_t
     retrieve_nonzero_indices
 
 
-@pytest.fixture(params=[DeadwoodCounter])
+@pytest.fixture(params=[TestDC])
 def deadwood_counter(request):
     return request.param
 

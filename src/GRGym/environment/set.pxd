@@ -1,5 +1,5 @@
 from .meld cimport Meld
-from .types cimport INT32_T
+from src.GRGym.core.types cimport INT32_T
 
 cdef class Set(Meld):
     cdef public:

@@ -1,6 +1,6 @@
 from .player cimport Player
 from .player import Player
-from .types cimport INT8_T, BOOL_T
+from src.GRGym.core.types cimport INT8_T, BOOL_T
 cdef class CythonEnvironment:
     cdef:
         Player __player_1, __player_2

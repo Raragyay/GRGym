@@ -3,7 +3,7 @@ import numpy as np
 from .card_state cimport CardState
 from .hand import Hand
 from .hand cimport Hand
-from .types cimport INT8_T
+from src.GRGym.core.types cimport INT8_T
 
 cdef class Player:
     def __init__(self):

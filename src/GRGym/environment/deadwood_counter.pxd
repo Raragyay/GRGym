@@ -1,6 +1,6 @@
 cimport numpy as np
 import numpy as np
-from .types cimport INT64_T, INT32_T
+from src.GRGym.core.types cimport INT64_T, INT32_T
 ctypedef void (*ACTION_FUNC)(DeadwoodCounter)
 cdef class DeadwoodCounter:
     """
@@ -15,32 +15,35 @@ cdef class DeadwoodCounter:
     cdef INT32_T cards_left_list[4]
     cdef INT64_T result[3]
     cdef ACTION_FUNC actions[3]
-    cdef INT64_T dp[14*14*14*14*3]
+    cdef INT64_T dp[14 * 14 * 14 * 14 * 3]
     cdef INT64_T UNDEFINED
     #
-    cpdef INT64_T deadwood(self)
+    cdef INT64_T deadwood(self)
+    cdef set remaining_cards(self)
+    cdef set melds(self)
     cdef void reset_cards_left_list(self)
-    cpdef set remaining_cards(self)
-    cpdef list melds(self)
+
     cdef void recurse(self)
+
     cdef bint in_dp(self)
     cdef Py_ssize_t cards_left_to_idx(self)
     cdef void set_dp(self, INT64_T deadwood, INT64_T cards_left, INT64_T melds)
     cdef void build_from_dp(self)
     cdef void build_result(self, INT64_T deadwood,INT64_T cards_left,INT64_T melds)
+
     cdef void try_to_drop_card(self)
     cdef void try_to_build_set(self)
     cdef void try_to_build_run(self)
 
-    cdef INT64_T[:] suit_hands(DeadwoodCounter self,Py_ssize_t suit)
-    cdef INT32_T determine_max_run_length(DeadwoodCounter self, INT32_T suit)
+    cdef INT64_T[:] suit_hands(self,Py_ssize_t suit)
+    cdef INT32_T determine_max_run_length(self, INT32_T suit)
 
     @staticmethod
     cdef INT64_T c_deadwood_val(INT64_T card)
-    cdef set bit_mask_to_array(DeadwoodCounter self, INT64_T bit_mask)
-
     @staticmethod
-    cdef list decode_meld_mask(INT64_T mask)
+    cdef set bit_mask_to_array(INT64_T bit_mask)
+    @staticmethod
+    cdef set decode_meld_mask(INT64_T mask)
     @staticmethod
     cdef INT64_T add_set(INT64_T current_mask, INT64_T set_rank)
     @staticmethod

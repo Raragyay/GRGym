@@ -5,7 +5,7 @@ from libc.string cimport memset
 from libc.limits cimport INT_MAX
 from .run cimport Run
 from .set cimport Set
-from .types cimport INT32_T, INT64_T
+from src.GRGym.core.types cimport INT32_T, INT64_T
 
 @cython.final
 cdef class DeadwoodCounter:
@@ -17,7 +17,7 @@ cdef class DeadwoodCounter:
     Compiles the deadwood value for the given hand, the best set of melds, and the deadwood cards.
     """
 
-    def __init__(self, hand: np.ndarray):
+    def __init__(self, np.ndarray[INT64_T, ndim=1] hand):
         """
         Hand must be in suit then rank form, ascending order
 
@@ -36,25 +36,25 @@ cdef class DeadwoodCounter:
         self.UNDEFINED = 0x3f3f3f3f3f3f3f3f
         memset(self.dp, 0x3f, 14 * 14 * 14 * 14 * 3 * sizeof(INT64_T))
 
-    cpdef INT64_T deadwood(self):
+    cdef INT64_T deadwood(self):
         self.reset_cards_left_list()
         self.recurse()
         return self.result[0]
+
+    cdef set remaining_cards(self):
+        self.reset_cards_left_list()
+        self.recurse()
+        return DeadwoodCounter.bit_mask_to_array(self.result[1])
+
+    cdef set melds(self):
+        self.reset_cards_left_list()
+        self.recurse()
+        return DeadwoodCounter.decode_meld_mask(self.result[2])
 
     cdef void reset_cards_left_list(self):
         cdef Py_ssize_t i
         for i in range(4):
             self.cards_left_list[i] = len(self.suit_hands(i))
-
-    cpdef set remaining_cards(self):
-        self.reset_cards_left_list()
-        self.recurse()
-        return self.bit_mask_to_array(self.result[1])
-
-    cpdef list melds(self):
-        self.reset_cards_left_list()
-        self.recurse()
-        return DeadwoodCounter.decode_meld_mask(self.result[2])
 
     cdef void recurse(self):
         """
@@ -260,8 +260,18 @@ cdef class DeadwoodCounter:
         self.build_result(lowest_deadwood, lowest_remaining_cards, lowest_melds)
         return
 
+    cdef INT64_T[:] suit_hands(self, Py_ssize_t suit):
+        if suit == 0:
+            return self.diamonds
+        elif suit == 1:
+            return self.clubs
+        elif suit == 2:
+            return self.hearts
+        elif suit == 3:
+            return self.spades
+
     @cython.boundscheck(False) # turn off bounds-checking for entire function
-    cdef INT32_T determine_max_run_length(DeadwoodCounter self, INT32_T suit):
+    cdef INT32_T determine_max_run_length(self, INT32_T suit):
         cdef INT64_T[:] suit_hand = self.suit_hands(suit)
         cdef INT32_T max_run_length = self.cards_left_list[suit] # This will always be >=3
         cdef INT64_T prev_rank = suit_hand[max_run_length - 1] % 13
@@ -276,10 +286,6 @@ cdef class DeadwoodCounter:
         return run_length
 
     @staticmethod
-    def deadwood_val(INT32_T card) -> int:
-        return DeadwoodCounter.c_deadwood_val(card)
-
-    @staticmethod
     cdef inline INT64_T c_deadwood_val(INT64_T card):
         cdef INT64_T rank = card % 13
         if rank >= 9:
@@ -287,16 +293,10 @@ cdef class DeadwoodCounter:
         else:
             return rank + 1  # zero-indexed
 
-    cdef set bit_mask_to_array(self, INT64_T bit_mask):
+    @staticmethod
+    cdef set bit_mask_to_array(INT64_T bit_mask):
         return {bit for bit in range(52) if (bit_mask & (1LL << bit)) != 0}
 
-    """
-    Masks are in the form [13*SET][Q-A RUN]
-    For example, a set of aces would be encoded at bit 48
-    A run from Ace of diamonds to 4 of diamonds would be encoded at bits 0 and 3
-    A run from Jack of diamonds to King of diamonds would only be encoded at bit 10. King of diamonds (12) would not 
-    be encoded
-    """
     @staticmethod
     cdef INT64_T add_run(INT64_T current_mask, INT64_T start, INT64_T end):
         current_mask |= (1LL << ((start // 13 * 12) + start % 13))
@@ -308,39 +308,43 @@ cdef class DeadwoodCounter:
     cdef INT64_T add_set(INT64_T current_mask, INT64_T set_rank):
         return current_mask | (1LL << (48 + set_rank))
 
+    """
+    Masks are 64-bit integers. 
+    Starting from the LSB, each group of 12 bits represents an encoding for the runs in that suit. 
+    The reason why we don't represent a suit with 13 bits is because 13 * 4 + 13 = 65, 
+    which cannot be fit inside a 64 bit integer. 
+    Instead, we can check if a run has been started to conclude whether or not a run ends at the King card.    
+    A run from Ace of Diamonds to 4 of Diamonds would be encoded at bits 0 and 3.
+    A run from Jack of Diamonds to King of Diamonds would only be encoded at bit 10. 
+    King of Diamonds (12) would not be encoded, but since the run was not closed, we can assume that it ends at King.
+    The following 13 bits are used to denote whether or not a set exists at the given rank. 
+    For example, a set of aces would be encoded at bit 48.
+    """
     @staticmethod
-    cdef list decode_meld_mask(INT64_T mask):
+    cdef set decode_meld_mask(INT64_T mask):
         cdef:
             bint run_started = False
             Py_ssize_t i, j
             INT64_T starting_card
-            list melds = []
+            set melds = set()
 
         for i in range(4):
             for j in range(12):
-                if mask & 1 == 1:  # If run is set
+                if mask & 1 == 1:  # If the current card is the start or end of a run
                     if not run_started:
                         starting_card = i * 13 + j
                         run_started = True
                     else:
                         run_started = False
-                        melds.append(Run(starting_card, i * 13 + j))
+                        melds.add(Run(starting_card, i * 13 + j))
                 mask >>= 1
-            if run_started:
+            if run_started: # If there is a run that hasn't been finished yet
                 run_started = False
-                melds.append(Run(starting_card, i * 13 + j))
+                melds.add(Run(starting_card, i * 13 + j))
+
         for i in range(13):
             if mask & 1 == 1:
-                melds.append(Set(i))
+                melds.add(Set(i))
             mask >>= 1
-        return melds
 
-    cdef INT64_T[:] suit_hands(DeadwoodCounter self, Py_ssize_t suit):
-        if suit == 0:
-            return self.diamonds
-        elif suit == 1:
-            return self.clubs
-        elif suit == 2:
-            return self.hearts
-        elif suit == 3:
-            return self.spades
+        return melds

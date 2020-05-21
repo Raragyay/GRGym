@@ -1,7 +1,7 @@
 import numpy as np
 
 from .card_enums import Rank, Suit
-from .types cimport INT64_T
+from src.GRGym.core.types cimport INT64_T
 
 suit_symbols = ['D', 'C', 'H', 'S']
 rank_symbols = ['A', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K']

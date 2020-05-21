@@ -1,5 +1,5 @@
 from .hand cimport Hand
-from .types cimport INT8_T, INT64_T,INT32_T
+from src.GRGym.core.types cimport INT8_T, INT64_T
 import numpy as np
 cimport numpy as np
 cdef class Player:

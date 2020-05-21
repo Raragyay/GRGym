@@ -1,7 +1,7 @@
-from .types cimport INT64_T, BOOL_T
-cimport numpy as np
-import numpy as np
+from src.GRGym.core.types cimport INT64_T, BOOL_T
 
+import numpy as np
+cimport numpy as np
 cdef class Hand:
     cdef public BOOL_T[:] __cards
 
