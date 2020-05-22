@@ -182,6 +182,7 @@ cdef class CythonEnvironment:
         # cdef Py_ssize_t i
         # cdef Run[:] run_melds=np.array([meld for meld in knocking_player_melds if isinstance(meld,Run)],dtype=object)
         cdef Run run
+        cdef Set m_set
 
         cdef set run_melds = {meld for meld in knocking_player_melds if isinstance(meld, Run)}
 

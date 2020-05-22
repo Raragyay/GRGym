@@ -9,27 +9,22 @@ from GRGym.environment.cythonenvironment import CythonEnvironment
 from GRGym.environment.player import Player
 from tests.utilities import idfn_id_expected, retrieve_boolean, retrieve_file_tests, retrieve_float_vector, \
     retrieve_int, retrieve_nonzero_indices
+from .cytest_environment_cython import *
 
 
 @pytest.fixture
 def test_env():
-    return CythonEnvironment(BaseAgent())  # TODO change to testing agent maybe?
+    return cytest_env()
 
 
 @pytest.fixture
 def base_player():
-    test_player = Player()
-    return test_player
+    return cybase_player()
 
 
 @pytest.fixture()
 def player_with_cards(base_player: Player):
-    def player_factory(card_list: np.ndarray):
-        for card in card_list:
-            base_player.add_card_from_deck(card)
-        return base_player
-
-    return player_factory
+    return cyplayer_with_cards(base_player)
 
 
 @pytest.mark.parametrize("cards_in_hand,expected", retrieve_file_tests(retrieve_nonzero_indices, retrieve_boolean,
@@ -38,7 +33,7 @@ def player_with_cards(base_player: Player):
 def test_can_knock(test_env: CythonEnvironment, player_with_cards: Callable[[np.ndarray], Player],
                    cards_in_hand: np.ndarray,
                    expected: bool):
-    assert CythonEnvironment.can_knock(player_with_cards(cards_in_hand)) == expected
+    cytest_can_knock(test_env, player_with_cards, cards_in_hand, expected)
 
 
 @pytest.mark.parametrize("cards_in_hand,expected", retrieve_file_tests(retrieve_nonzero_indices, retrieve_boolean,
