@@ -1,15 +1,17 @@
 from .player cimport Player
 from .player import Player
-from src.GRGym.core.types cimport INT8_T, BOOL_T
+from libc.stdint cimport int8_t, int64_t
 cdef class CythonEnvironment:
     cdef:
         Player __player_1, __player_2
         object opponent_agent
     cdef:
-        INT8_T[:] __deck
-        INT8_T[:] __discard_pile
-        BOOL_T draw_phase
+        int8_t[:] __deck
+        int8_t[:] __discard_pile
+        bint draw_phase
         Py_ssize_t num_of_discard_cards
+
+    # cdef int64_t try_to_knock(self, Player player)
 
     @staticmethod
     cdef bint c_is_gin(Player player)
@@ -20,5 +22,5 @@ cdef class CythonEnvironment:
     cdef Player opponents(self, Player player)
     cdef bint discard_pile_is_empty(self)
     cdef void add_first_discard_card(self)
-    cdef INT8_T pop_from_discard_pile(self)
-    cdef void add_to_discard_pile(self, INT8_T new_card)
+    cdef int8_t pop_from_discard_pile(self)
+    cdef void add_to_discard_pile(self, int8_t new_card)

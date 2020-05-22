@@ -1,7 +1,8 @@
 from .meld cimport Meld
-from src.GRGym.core.types cimport INT32_T
+from libc.stdint cimport int32_t
 
 cdef class Set(Meld):
-    cdef public:
-        INT32_T rank
-    cpdef set connectable_cards(self)
+    cdef:
+        int32_t rank
+
+    cdef set connectable_cards(self)

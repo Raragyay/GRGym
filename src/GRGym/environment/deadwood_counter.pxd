@@ -1,6 +1,6 @@
 cimport numpy as np
 import numpy as np
-from src.GRGym.core.types cimport INT64_T, INT32_T
+from libc.stdint cimport int64_t, int32_t
 ctypedef void (*ACTION_FUNC)(DeadwoodCounter)
 cdef class DeadwoodCounter:
     """
@@ -11,14 +11,14 @@ cdef class DeadwoodCounter:
     Compiles the deadwood value for the given hand, the best set of melds, and the deadwood cards.
     """
     cdef np.ndarray hand
-    cdef INT64_T[:] diamonds, clubs, hearts, spades
-    cdef INT32_T cards_left_list[4]
-    cdef INT64_T result[3]
+    cdef int64_t[:] diamonds, clubs, hearts, spades
+    cdef int32_t cards_left_list[4]
+    cdef int64_t result[3]
     cdef ACTION_FUNC actions[3]
-    cdef INT64_T dp[14 * 14 * 14 * 14 * 3]
-    cdef INT64_T UNDEFINED
+    cdef int64_t dp[14 * 14 * 14 * 14 * 3]
+    cdef int64_t UNDEFINED
     #
-    cdef INT64_T deadwood(self)
+    cdef int64_t deadwood(self)
     cdef set remaining_cards(self)
     cdef set melds(self)
     cdef void reset_cards_left_list(self)
@@ -27,24 +27,28 @@ cdef class DeadwoodCounter:
 
     cdef bint in_dp(self)
     cdef Py_ssize_t cards_left_to_idx(self)
-    cdef void set_dp(self, INT64_T deadwood, INT64_T cards_left, INT64_T melds)
+    cdef void set_dp(self, int64_t deadwood, int64_t cards_left, int64_t melds)
     cdef void build_from_dp(self)
-    cdef void build_result(self, INT64_T deadwood,INT64_T cards_left,INT64_T melds)
+    cdef void build_result(self, int64_t deadwood,int64_t cards_left,int64_t melds)
 
     cdef void try_to_drop_card(self)
     cdef void try_to_build_set(self)
     cdef void try_to_build_run(self)
 
-    cdef INT64_T[:] suit_hands(self,Py_ssize_t suit)
-    cdef INT32_T determine_max_run_length(self, INT32_T suit)
+    cdef int64_t[:] suit_hands(self,Py_ssize_t suit)
+    cdef int32_t determine_max_run_length(self, int32_t suit)
 
     @staticmethod
-    cdef INT64_T c_deadwood_val(INT64_T card)
+    cdef int64_t deadwood_val(int64_t card)
+
     @staticmethod
-    cdef set bit_mask_to_array(INT64_T bit_mask)
+    cdef int64_t encode_card(int64_t prospective_remaining_cards, int64_t ignored_card)
     @staticmethod
-    cdef set decode_meld_mask(INT64_T mask)
+    cdef set bit_mask_to_array(int64_t bit_mask)
+
     @staticmethod
-    cdef INT64_T add_set(INT64_T current_mask, INT64_T set_rank)
+    cdef set decode_meld_mask(int64_t mask)
     @staticmethod
-    cdef INT64_T add_run(INT64_T current_mask, INT64_T start, INT64_T end)
+    cdef int64_t add_set(int64_t current_mask, int64_t set_rank)
+    @staticmethod
+    cdef int64_t add_run(int64_t current_mask, int64_t start, int64_t end)

@@ -24,20 +24,13 @@ def build_extension(ext_name):
     )
 
 
-os.chdir('src')
+os.chdir('tests')
 ext_names = scan_dir()
 extensions = [build_extension(name) for name in ext_names]
 
 setup(
-    name="GRGym",
-    packages=find_namespace_packages(),
     ext_modules=cythonize(extensions,
                           compiler_directives={
                               'language_level': '3',
-                              'embedsignature': 'True'
-                          },
-                          annotate=True),
-    zip_safe=False,
-    package_data={
-        'GRGym.environment': ['*.pxd']},
+                          }),
 )

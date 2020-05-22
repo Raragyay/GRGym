@@ -1,21 +1,22 @@
-import pytest
-
 from GRGym.environment.meld import Meld
 
-
-def test_connectable_cards():
-    meld = Meld()
-    with pytest.raises(NotImplementedError):
-        meld.connectable_cards()
+from tests.environment.meld.cytest_meld import *
 
 
-def test_hash():
-    meld = Meld()
+@pytest.fixture
+def meld():
+    return cytest_meld_object()
+
+
+def test_meld(meld):
+    cytest_connectable_cards(meld)
+
+
+def test_hash(meld):
     with pytest.raises(NotImplementedError):
         meld.__hash__()
 
 
-def test_eq():
-    meld = Meld()
+def test_eq(meld):
     with pytest.raises(NotImplementedError):
-        meld.__eq__(Meld())
+        meld.__eq__(cytest_meld_object())

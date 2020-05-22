@@ -1,7 +1,7 @@
 import numpy as np
 
 from .card_enums import Rank, Suit
-from src.GRGym.core.types cimport INT64_T
+from libc.stdint cimport int64_t
 
 suit_symbols = ['D', 'C', 'H', 'S']
 rank_symbols = ['A', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K']
@@ -22,13 +22,13 @@ cdef class Hand:
     def cards(self, new_arr):
         self.__cards = new_arr
 
-    cpdef bint has_card(self, INT64_T card_val):
+    cpdef bint has_card(self, int64_t card_val):
         return self.__cards[card_val]
 
-    cpdef void add_card(self, INT64_T card_val):
+    cpdef void add_card(self, int64_t card_val):
         self.__cards[card_val] = True
 
-    cpdef void remove_card(self, INT64_T card_val):
+    cpdef void remove_card(self, int64_t card_val):
         self.__cards[card_val] = False
 
     cpdef np.ndarray card_list(self):

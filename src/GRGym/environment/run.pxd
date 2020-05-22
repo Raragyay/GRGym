@@ -1,7 +1,7 @@
 from .meld cimport Meld
-from src.GRGym.core.types cimport INT32_T
+from libc.stdint cimport int32_t
 
 cdef class Run(Meld):
-    cdef public:
-        INT32_T start, end, suit
-    cpdef set connectable_cards(self)
+    cdef:
+        int32_t start, end, suit
+    cdef set connectable_cards(self)

@@ -6,7 +6,7 @@ cdef class Run(Meld):
         self.end = end
         self.suit = start // 13
 
-    cpdef set connectable_cards(self):
+    cdef set connectable_cards(self):
         cdef set result = set()
         if self.start % 13 != 0:  # not first card in suit
             result.add(self.start - 1)
@@ -24,8 +24,8 @@ cdef class Run(Meld):
         return self.__str__()  # TODO MAKE NICER
 
     def __eq__(self, other):
-        try:
+        if isinstance(other, Run):
             casted = <Run> other
             return self.start == casted.start and self.end == casted.end
-        finally:
-            pass
+        else:
+            return False

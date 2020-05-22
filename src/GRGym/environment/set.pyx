@@ -1,11 +1,15 @@
-from .meld cimport Meld
+import cython
 
+from .meld cimport Meld
+from libc.stdint cimport int32_t
+
+@cython.final
 cdef class Set(Meld):
-    def __init__(self, rank: int):
+    def __init__(self, int32_t rank):
         super().__init__()
         self.rank = rank
 
-    cpdef set connectable_cards(self):
+    cdef set connectable_cards(self):
         return {suit * 13 + self.rank for suit in range(4)}
 
     def __hash__(self):
@@ -18,8 +22,8 @@ cdef class Set(Meld):
         return self.__str__()  # TODO MAKE NICER
 
     def __eq__(self, other):
-        try:
+        if isinstance(other, Set):
             casted = <Set> other
             return self.rank == casted.rank
-        finally:
-            pass
+        else:
+            return False

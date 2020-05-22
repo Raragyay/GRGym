@@ -3,7 +3,7 @@ import numpy as np
 from .card_state cimport CardState
 from .hand import Hand
 from .hand cimport Hand
-from src.GRGym.core.types cimport INT8_T
+from libc.stdint cimport int8_t
 
 cdef class Player:
     def __init__(self):
@@ -31,29 +31,29 @@ cdef class Player:
         self.hand = Hand()
         self.__card_states = np.zeros(52, dtype=np.int8)
 
-    cpdef void add_card_from_deck(self, INT8_T card_val):
+    cpdef void add_card_from_deck(self, int8_t card_val):
         self.hand.add_card(card_val)
         self.__card_states[card_val] = CardState.MINE_FROM_DECK
 
-    cpdef void add_card_from_discard(self, INT8_T card_val, INT8_T new_top_of_discard):
+    cpdef void add_card_from_discard(self, int8_t card_val, int8_t new_top_of_discard):
         self.hand.add_card(card_val)
         self.__card_states[card_val] = CardState.MINE_FROM_DISCARD
         self.update_card_to_top(new_top_of_discard)
 
-    cpdef void report_opponent_drew_from_discard(self, INT8_T card_val, INT8_T new_top_of_discard):
+    cpdef void report_opponent_drew_from_discard(self, int8_t card_val, int8_t new_top_of_discard):
         self.__card_states[card_val] = CardState.THEIRS_FROM_DISCARD
         self.update_card_to_top(new_top_of_discard)
 
-    cpdef void discard_card(self, INT8_T card_to_discard, INT8_T previous_top):
+    cpdef void discard_card(self, int8_t card_to_discard, int8_t previous_top):
         self.hand.remove_card(card_to_discard)
         self.__card_states[card_to_discard] = CardState.DISCARD_MINE_TOP
         self.update_card_down(previous_top)
 
-    cpdef void report_opponent_discarded(self, INT8_T card_discarded, INT8_T previous_top):
+    cpdef void report_opponent_discarded(self, int8_t card_discarded, int8_t previous_top):
         self.__card_states[card_discarded] = CardState.DISCARD_THEIRS_TOP
         self.update_card_down(previous_top)
 
-    cpdef void update_card_to_top(self, INT8_T new_top_of_discard):
+    cpdef void update_card_to_top(self, int8_t new_top_of_discard):
         if new_top_of_discard == NO_CARD():
             return
         if self.__card_states[new_top_of_discard] == CardState.DISCARD_THEIRS:
@@ -61,7 +61,7 @@ cdef class Player:
         elif self.__card_states[new_top_of_discard] == CardState.DISCARD_MINE:
             self.__card_states[new_top_of_discard] = CardState.DISCARD_MINE_TOP
 
-    cpdef void update_card_down(self, INT8_T previous_top_of_discard):
+    cpdef void update_card_down(self, int8_t previous_top_of_discard):
         if previous_top_of_discard == NO_CARD():
             return
         if self.__card_states[previous_top_of_discard] == CardState.DISCARD_THEIRS_TOP:
@@ -69,7 +69,7 @@ cdef class Player:
         elif self.__card_states[previous_top_of_discard] == CardState.DISCARD_MINE_TOP:
             self.__card_states[previous_top_of_discard] = CardState.DISCARD_MINE
 
-    cpdef bint has_card(self, INT8_T card_val):
+    cpdef bint has_card(self, int8_t card_val):
         return self.hand.has_card(card_val)
 
     cpdef np.ndarray card_list(self):

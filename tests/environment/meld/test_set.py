@@ -1,14 +1,16 @@
-import pytest
-from GRGym.environment.set import Set
+from .cytest_set import *
+
+
+@pytest.fixture
+def set_class():
+    return cytest_set_class()
 
 
 def test_connectable_cards():
-    for i in range(13):
-        test_set = Set(i)
-        assert test_set.connectable_cards() == {suit * 13 + i for suit in range(4)}
+    cytest_connectable_cards()
 
 
-def test_eq():
-    with pytest.raises(AssertionError):
-        assert Set(1) == 0
-    assert Set(2) == Set(2)
+def test_eq(set_class):
+    assert set_class(1) != 0
+    assert set_class(1) != set_class(2)
+    assert set_class(2) == set_class(2)

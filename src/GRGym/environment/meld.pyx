@@ -2,7 +2,7 @@ cdef class Meld:
     def __init__(self):
         pass
 
-    cpdef set connectable_cards(self):
+    cdef set connectable_cards(self):
         raise NotImplementedError()
 
     def __hash__(self):

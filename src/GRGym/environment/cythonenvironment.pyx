@@ -1,4 +1,3 @@
-# cython: profile=True,language_level=3
 import logging
 import typing
 from copy import deepcopy
@@ -14,6 +13,7 @@ from .player import Player
 from .run cimport Run
 from .set cimport Set
 from .deadwood_counter cimport DeadwoodCounter
+from libc.stdint cimport int64_t
 
 @cython.final
 cdef class CythonEnvironment:
@@ -130,7 +130,7 @@ cdef class CythonEnvironment:
         return
 
     def draw_from_discard(self, player):
-        cdef INT8_T drawn_card = self.pop_from_discard_pile()
+        cdef int8_t drawn_card = self.pop_from_discard_pile()
         new_top_discard: int = NO_CARD() if self.discard_pile_is_empty() else self.discard_pile[-1]
         player.add_card_from_discard(drawn_card, new_top_discard)
         self.opponents(player).report_opponent_drew_from_discard(drawn_card, new_top_discard)
@@ -163,13 +163,13 @@ cdef class CythonEnvironment:
         player.discard_card(card_to_discard, previous_top)
         self.opponents(player).report_opponent_discarded(card_to_discard, previous_top)
 
-    def try_to_knock(self, player) -> int:
+    def try_to_knock(self, Player player):
         deadwood_counter = DeadwoodCounter(player.card_list())
         knocking_player_deadwood = deadwood_counter.deadwood()
         knocking_player_melds = deadwood_counter.melds()
         deadwood_counter = DeadwoodCounter(self.opponents(player).card_list())
         opponent_deadwood = deadwood_counter.deadwood()
-        opponent_remaining_cards = set(deadwood_counter.remaining_cards())
+        opponent_remaining_cards = deadwood_counter.remaining_cards()
 
         # layoff into runs first. This is because any cards laid off into runs will never block layoffs into sets,
         # while the opposite could happen.
@@ -179,26 +179,30 @@ cdef class CythonEnvironment:
         # However, if run layoffs run first, then both the 2 of Diamonds and the Ace of Diamonds would be laid off.
 
         # try to layoff into runs
-        run_melds: typing.Set[Run] = {deepcopy(meld) for meld in knocking_player_melds if isinstance(meld, Run)}
+        # cdef Py_ssize_t i
+        # cdef Run[:] run_melds=np.array([meld for meld in knocking_player_melds if isinstance(meld,Run)],dtype=object)
+        cdef Run run
+
+        cdef set run_melds = {meld for meld in knocking_player_melds if isinstance(meld, Run)}
 
         while True:
-            connectable_card_to_run: Dict[int, Run] = {card: run for run in run_melds for card in
-                                                       run.connectable_cards()}
-            connectable_remaining_cards = opponent_remaining_cards & connectable_card_to_run.keys()
-            if not connectable_remaining_cards:
+            did_something = False
+            for run in run_melds:
+                for card in run.connectable_cards():
+                    if card in opponent_remaining_cards:
+                        if card == run.start - 1:  # Append to the left
+                            run.start -= 1
+                        elif card == run.end + 1:
+                            run.end += 1
+                        else:
+                            logging.error(
+                                f"Card {card} was inserted into connectable_remaining_cards, but it is not an "
+                                f"extension of any run. ")
+                        opponent_remaining_cards.remove(card)
+                        opponent_deadwood -= DeadwoodCounter.deadwood_val(card)
+                        did_something = True
+            if not did_something:
                 break
-            for card in connectable_remaining_cards:
-                connectable_run = connectable_card_to_run[card]
-                if card == connectable_run.start - 1:  # Append to the left
-                    connectable_run.start -= 1
-                elif card == connectable_run.end + 1:
-                    connectable_run.end += 1
-                else:
-                    logging.error(f"Card {card} was inserted into connectable_remaining_cards, but it is not an "
-                                  f"extension of any run. ")
-                opponent_remaining_cards.remove(card)
-                opponent_deadwood -= deadwood_counter.deadwood_val(card)
-
         # try to layoff into sets
         set_melds: typing.Set[Set] = {deepcopy(meld) for meld in knocking_player_melds if isinstance(meld, Set)}
         while True:
@@ -209,7 +213,7 @@ cdef class CythonEnvironment:
                 break
             for card in connectable_remaining_cards:
                 opponent_remaining_cards.remove(card)
-                opponent_deadwood -= deadwood_counter.deadwood_val(card)
+                opponent_deadwood -= DeadwoodCounter.deadwood_val(card)
 
         # Check score difference
         if knocking_player_deadwood < opponent_deadwood:  # won hand
@@ -319,12 +323,12 @@ cdef class CythonEnvironment:
     def player_1(self, new_player):
         self.__player_1 = <Player> new_player
 
-    cdef INT8_T pop_from_discard_pile(self):
-        cdef INT8_T to_return = self.__discard_pile[self.num_of_discard_cards - 1]
+    cdef int8_t pop_from_discard_pile(self):
+        cdef int8_t to_return = self.__discard_pile[self.num_of_discard_cards - 1]
         self.num_of_discard_cards -= 1
         return to_return
 
-    cdef void add_to_discard_pile(self, INT8_T new_card):
+    cdef void add_to_discard_pile(self, int8_t new_card):
         self.__discard_pile[self.num_of_discard_cards] = new_card
         self.num_of_discard_cards += 1
         return

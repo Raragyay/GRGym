@@ -1,12 +1,11 @@
-from src.GRGym.core.types cimport INT64_T, BOOL_T
-
+from libc.stdint cimport int64_t, uint8_t
 import numpy as np
 cimport numpy as np
 cdef class Hand:
-    cdef public BOOL_T[:] __cards
+    cdef public uint8_t[:] __cards
 
-    cpdef bint has_card(self, INT64_T card_val)
+    cpdef bint has_card(self, int64_t card_val)
 
-    cpdef void add_card(self, INT64_T card_val)
-    cpdef void remove_card(self, INT64_T card_val)
+    cpdef void add_card(self, int64_t card_val)
+    cpdef void remove_card(self, int64_t card_val)
     cpdef np.ndarray card_list(self)

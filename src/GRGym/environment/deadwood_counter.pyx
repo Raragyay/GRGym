@@ -5,7 +5,7 @@ from libc.string cimport memset
 from libc.limits cimport INT_MAX
 from .run cimport Run
 from .set cimport Set
-from src.GRGym.core.types cimport INT32_T, INT64_T
+from libc.stdint cimport int32_t, int64_t
 
 @cython.final
 cdef class DeadwoodCounter:
@@ -17,7 +17,7 @@ cdef class DeadwoodCounter:
     Compiles the deadwood value for the given hand, the best set of melds, and the deadwood cards.
     """
 
-    def __init__(self, np.ndarray[INT64_T, ndim=1] hand):
+    def __init__(self, np.ndarray[int64_t, ndim=1] hand):
         """
         Hand must be in suit then rank form, ascending order
 
@@ -34,9 +34,9 @@ cdef class DeadwoodCounter:
 
         self.actions = [self.try_to_build_set, self.try_to_build_run, self.try_to_drop_card]
         self.UNDEFINED = 0x3f3f3f3f3f3f3f3f
-        memset(self.dp, 0x3f, 14 * 14 * 14 * 14 * 3 * sizeof(INT64_T))
+        memset(self.dp, 0x3f, 14 * 14 * 14 * 14 * 3 * sizeof(int64_t))
 
-    cdef INT64_T deadwood(self):
+    cdef int64_t deadwood(self):
         self.reset_cards_left_list()
         self.recurse()
         return self.result[0]
@@ -73,10 +73,10 @@ cdef class DeadwoodCounter:
             return
 
         cdef:
-            INT64_T lowest_deadwood = INT_MAX
-            INT64_T lowest_deadwood_remaining_cards = 0LL
-            INT64_T lowest_deadwood_melds = 0LL
-            INT64_T prospective_deadwood, prospective_remaining_cards, prospective_melds
+            int64_t lowest_deadwood = INT_MAX
+            int64_t lowest_deadwood_remaining_cards = 0LL
+            int64_t lowest_deadwood_melds = 0LL
+            int64_t prospective_deadwood, prospective_remaining_cards, prospective_melds
 
         for action in self.actions:
             action(self)
@@ -96,7 +96,7 @@ cdef class DeadwoodCounter:
         self.build_from_dp()
         return
 
-    cdef void set_dp(self, INT64_T deadwood, INT64_T cards_left, INT64_T melds):
+    cdef void set_dp(self, int64_t deadwood, int64_t cards_left, int64_t melds):
         self.dp[self.cards_left_to_idx() + 0] = deadwood
         self.dp[self.cards_left_to_idx() + 1] = cards_left
         self.dp[self.cards_left_to_idx() + 2] = melds
@@ -114,27 +114,27 @@ cdef class DeadwoodCounter:
     cdef bint in_dp(self):
         return self.dp[self.cards_left_to_idx() + 0] != self.UNDEFINED
 
-    cdef void build_result(self, INT64_T deadwood, INT64_T cards_left, INT64_T melds):
+    cdef void build_result(self, int64_t deadwood, int64_t cards_left, int64_t melds):
         self.result[0] = deadwood
         self.result[1] = cards_left
         self.result[2] = melds
 
     cdef void try_to_drop_card(self):
         cdef:
-            INT64_T lowest_deadwood = INT_MAX
-            INT64_T lowest_deadwood_remaining_cards = 0LL
-            INT64_T lowest_deadwood_melds = 0LL
+            int64_t lowest_deadwood = INT_MAX
+            int64_t lowest_deadwood_remaining_cards = 0LL
+            int64_t lowest_deadwood_melds = 0LL
             Py_ssize_t suit
-            INT32_T cards_left
-            INT64_T ignored_card, ignored_card_deadwood
-            INT64_T prospective_deadwood, prospective_remaining_cards, prospective_melds
+            int32_t cards_left
+            int64_t ignored_card, ignored_card_deadwood
+            int64_t prospective_deadwood, prospective_remaining_cards, prospective_melds
 
         for suit in range(4):
             cards_left = self.cards_left_list[suit]
             if cards_left == 0:
                 continue
             ignored_card = self.suit_hands(suit)[self.cards_left_list[suit] - 1]
-            ignored_card_deadwood = DeadwoodCounter.c_deadwood_val(ignored_card)
+            ignored_card_deadwood = DeadwoodCounter.deadwood_val(ignored_card)
             self.cards_left_list[suit] -= 1  # Ignore card
 
             self.recurse()
@@ -144,7 +144,7 @@ cdef class DeadwoodCounter:
 
             if prospective_deadwood + ignored_card_deadwood < lowest_deadwood:
                 lowest_deadwood = prospective_deadwood + ignored_card_deadwood
-                lowest_deadwood_remaining_cards = prospective_remaining_cards | (1LL << ignored_card)
+                lowest_deadwood_remaining_cards = DeadwoodCounter.encode_card(prospective_remaining_cards, ignored_card)
                 lowest_deadwood_melds = prospective_melds
             self.cards_left_list[suit] += 1  # restore card
         self.build_result(lowest_deadwood, lowest_deadwood_remaining_cards, lowest_deadwood_melds)
@@ -154,13 +154,13 @@ cdef class DeadwoodCounter:
         # Get rank of last card in each suit
         cdef:
             Py_ssize_t i, j
-            INT64_T last_ranks[4]
-            INT32_T counter_arr[18]
-            INT64_T max_freq_rank = 0
-            INT32_T frequency = 0
-            INT64_T last_rank
-            INT64_T suits_with_set_rank[4]
-        memset(counter_arr, 0, 18 * sizeof(INT32_T))
+            int64_t last_ranks[4]
+            int32_t counter_arr[18]
+            int64_t max_freq_rank = 0
+            int32_t frequency = 0
+            int64_t last_rank
+            int64_t suits_with_set_rank[4]
+        memset(counter_arr, 0, 18 * sizeof(int32_t))
 
         # Find most frequent rank and its frequency
 
@@ -228,11 +228,11 @@ cdef class DeadwoodCounter:
 
     cdef void try_to_build_run(self):  #
         cdef:
-            INT64_T lowest_deadwood = INT_MAX
-            INT64_T lowest_remaining_cards = 0LL
-            INT64_T lowest_melds = 0LL
-            INT32_T max_run_length
-            INT64_T run_start_card, run_end_card
+            int64_t lowest_deadwood = INT_MAX
+            int64_t lowest_remaining_cards = 0LL
+            int64_t lowest_melds = 0LL
+            int32_t max_run_length
+            int64_t run_start_card, run_end_card
 
         for suit in range(4):
             if self.cards_left_list[suit] < 3:  # Not enough cards to build run
@@ -260,7 +260,7 @@ cdef class DeadwoodCounter:
         self.build_result(lowest_deadwood, lowest_remaining_cards, lowest_melds)
         return
 
-    cdef INT64_T[:] suit_hands(self, Py_ssize_t suit):
+    cdef int64_t[:] suit_hands(self, Py_ssize_t suit):
         if suit == 0:
             return self.diamonds
         elif suit == 1:
@@ -271,11 +271,11 @@ cdef class DeadwoodCounter:
             return self.spades
 
     @cython.boundscheck(False) # turn off bounds-checking for entire function
-    cdef INT32_T determine_max_run_length(self, INT32_T suit):
-        cdef INT64_T[:] suit_hand = self.suit_hands(suit)
-        cdef INT32_T max_run_length = self.cards_left_list[suit] # This will always be >=3
-        cdef INT64_T prev_rank = suit_hand[max_run_length - 1] % 13
-        cdef INT32_T run_length = 1
+    cdef int32_t determine_max_run_length(self, int32_t suit):
+        cdef int64_t[:] suit_hand = self.suit_hands(suit)
+        cdef int32_t max_run_length = self.cards_left_list[suit] # This will always be >=3
+        cdef int64_t prev_rank = suit_hand[max_run_length - 1] % 13
+        cdef int32_t run_length = 1
 
         while run_length < max_run_length:
             if prev_rank - suit_hand[max_run_length - 1 - run_length] % 13 == 1:  # Is consecutive
@@ -286,27 +286,20 @@ cdef class DeadwoodCounter:
         return run_length
 
     @staticmethod
-    cdef inline INT64_T c_deadwood_val(INT64_T card):
-        cdef INT64_T rank = card % 13
+    cdef inline int64_t deadwood_val(int64_t card):
+        cdef int64_t rank = card % 13
         if rank >= 9:
             return 10
         else:
             return rank + 1  # zero-indexed
 
     @staticmethod
-    cdef set bit_mask_to_array(INT64_T bit_mask):
+    cdef int64_t encode_card(int64_t prospective_remaining_cards, int64_t ignored_card):
+        return prospective_remaining_cards | (1LL << ignored_card)
+
+    @staticmethod
+    cdef set bit_mask_to_array(int64_t bit_mask):
         return {bit for bit in range(52) if (bit_mask & (1LL << bit)) != 0}
-
-    @staticmethod
-    cdef INT64_T add_run(INT64_T current_mask, INT64_T start, INT64_T end):
-        current_mask |= (1LL << ((start // 13 * 12) + start % 13))
-        if(end - 12) % 13 != 0:  # Is not a king
-            current_mask |= (1LL << ((end // 13 * 12) + end % 13))
-        return current_mask
-
-    @staticmethod
-    cdef INT64_T add_set(INT64_T current_mask, INT64_T set_rank):
-        return current_mask | (1LL << (48 + set_rank))
 
     """
     Masks are 64-bit integers. 
@@ -320,12 +313,24 @@ cdef class DeadwoodCounter:
     The following 13 bits are used to denote whether or not a set exists at the given rank. 
     For example, a set of aces would be encoded at bit 48.
     """
+
     @staticmethod
-    cdef set decode_meld_mask(INT64_T mask):
+    cdef int64_t add_run(int64_t current_mask, int64_t start, int64_t end):
+        current_mask |= (1LL << ((start // 13 * 12) + start % 13))
+        if(end - 12) % 13 != 0:  # Is not a king
+            current_mask |= (1LL << ((end // 13 * 12) + end % 13))
+        return current_mask
+
+    @staticmethod
+    cdef int64_t add_set(int64_t current_mask, int64_t set_rank):
+        return current_mask | (1LL << (48 + set_rank))
+
+    @staticmethod
+    cdef set decode_meld_mask(int64_t mask):
         cdef:
             bint run_started = False
             Py_ssize_t i, j
-            INT64_T starting_card
+            int64_t starting_card
             set melds = set()
 
         for i in range(4):
