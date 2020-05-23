@@ -57,6 +57,10 @@ def test_report_opponent_drew_from_discard(test_player: Player):
     cytest_report_opponent_drew_from_discard(test_player)
 
 
+def test_copy(test_player: Player):
+    cytest_copy(test_player)
+
+
 def test_eq_cards(test_player: Player):
     cytest_eq(test_player)
 

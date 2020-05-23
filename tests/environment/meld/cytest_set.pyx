@@ -1,10 +1,17 @@
 import pytest
 from GRGym.environment.set cimport Set
 
-def cytest_set_class():
+from tests.utilities import cython_test
+
+def base_set_class():
     return Set
 
-def cytest_connectable_cards():
+@pytest.fixture
+def set_class():
+    return base_set_class()
+
+@cython_test
+def test_connectable_cards():
     for i in range(13):
         test_set = Set(i)
         assert test_set.connectable_cards() == {suit * 13 + i for suit in range(4)}

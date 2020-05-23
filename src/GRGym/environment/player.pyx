@@ -78,6 +78,13 @@ cdef class Player:
     cdef np.ndarray hand_mask(self):
         return np.copy(self.hand.cards)
 
+    cdef Player copy(self):
+        new_player = Player()
+        new_player.hand = self.hand.copy()
+        new_player.card_states = self.card_states.copy()
+        new_player.score = self.score
+        return new_player
+
     def __eq__(self, other):
         if isinstance(other, Player):
             casted = <Player> other
@@ -94,9 +101,3 @@ cdef class Player:
                f'Hand: {self.hand}\n' \
                f'Score: {self.score}'
 
-    def __deepcopy__(self, memodict={}):
-        new_player = Player()
-        new_player.hand = self.hand.__deepcopy__()
-        new_player.card_states = self.card_states.copy()
-        new_player.score = self.score
-        return new_player

@@ -1,9 +1,15 @@
 import pytest
 from GRGym.environment.meld cimport Meld
+from tests.utilities import cython_test
 
-def cytest_meld_object():
+def base_meld():
     return Meld()
 
-def cytest_connectable_cards(Meld meld):
+@pytest.fixture
+def meld():
+    return base_meld()
+
+@cython_test
+def test_connectable_cards(Meld meld):
     with pytest.raises(NotImplementedError):
         meld.connectable_cards()

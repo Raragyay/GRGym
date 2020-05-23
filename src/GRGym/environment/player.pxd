@@ -2,6 +2,7 @@ from .hand cimport Hand
 from libc.stdint cimport int8_t, int64_t
 import numpy as np
 cimport numpy as np
+
 cdef class Player:
     cdef:
         Hand hand
@@ -19,6 +20,7 @@ cdef class Player:
     cdef bint has_card(self, int8_t card_val)
     cdef np.ndarray card_list(self)
     cdef np.ndarray hand_mask(self)
+    cdef Player copy(self)
 
 cpdef inline int8_t NO_CARD():
     return -1

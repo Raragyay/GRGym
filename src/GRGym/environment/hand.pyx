@@ -57,7 +57,7 @@ cdef class Hand:
     def __eq__(self, other):
         return isinstance(other, Hand) and np.array_equal(self.cards, other.cards)
 
-    def __deepcopy__(self, memodict={}):
+    def copy(self):
         new_hand = Hand()
         new_hand.cards = self.cards.copy()
         return new_hand
