@@ -46,7 +46,7 @@ def retrieve_int_vector(string: str) -> np.ndarray:
 
 
 def retrieve_float_vector(string: str) -> np.ndarray:
-    return retrieve_vector(string, np.float)
+    return retrieve_vector(string, np.float64)
 
 
 def retrieve_vector(string: str, data_type: type = None) -> np.ndarray:
@@ -87,7 +87,7 @@ def idfn_name_id_expected(file_name, expected, test_num):
     return f"{file_name}.{test_num}-{expected}"
 
 
-def cython_test(signature):
+def cython_wrap(signature):
     sig = inspect.signature(signature)
     print(sig.parameters)
     code = f'lambda {",".join(sig.parameters.keys())}: func{sig}'

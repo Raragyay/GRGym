@@ -7,7 +7,7 @@ cdef class Player:
     cdef:
         Hand hand
         int8_t[:] __card_states
-        int64_t __score
+        int64_t score
 
     cdef void reset_hand(self)
     cdef void add_card_from_deck(self, int8_t card_val)

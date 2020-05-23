@@ -1,7 +1,7 @@
 import pytest
 from GRGym.environment.set cimport Set
 
-from tests.utilities import cython_test
+from tests.utilities import cython_wrap
 
 def base_set_class():
     return Set
@@ -10,7 +10,7 @@ def base_set_class():
 def set_class():
     return base_set_class()
 
-@cython_test
+@cython_wrap
 def test_connectable_cards():
     for i in range(13):
         test_set = Set(i)

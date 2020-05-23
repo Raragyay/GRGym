@@ -9,15 +9,7 @@ cdef class Player:
     def __init__(self):
         self.hand = Hand()
         self.__card_states = np.zeros(52, dtype=np.int8)
-        self.__score = 0
-
-    @property
-    def score(self):
-        return self.__score
-
-    @score.setter
-    def score(self, new_score):
-        self.__score = new_score
+        self.score = 0
 
     @property
     def card_states(self):
@@ -81,20 +73,21 @@ cdef class Player:
     cdef Player copy(self):
         new_player = Player()
         new_player.hand = self.hand.copy()
-        new_player.card_states = self.card_states.copy()
+        new_player.__card_states = self.__card_states.copy()
         new_player.score = self.score
         return new_player
 
     def __eq__(self, other):
         if isinstance(other, Player):
             casted = <Player> other
-            return self.hand == casted.hand and np.array_equal(self.card_states, casted.card_states) and self.score == \
+            return self.hand == casted.hand and np.array_equal(self.__card_states,
+                                                               casted.__card_states) and self.score == \
                    casted.score
         else:
             return False
 
     def __repr__(self):
-        return f'Player: {self.hand.__repr__()} | {self.score} | {self.card_states}'
+        return f'Player: {self.hand.__repr__()} | {self.score} | {self.__card_states}'
 
     def __str__(self):
         return f'Player:\n' \

@@ -7,7 +7,7 @@ import cython
 import numpy as np
 
 from src.GRGym.agent import BaseAgent
-from .action_result import ActionResult
+from .action_result cimport ActionResult
 from .player cimport Player, NO_CARD
 from .player import Player
 from .run cimport Run
@@ -17,10 +17,6 @@ from libc.stdint cimport int64_t
 
 @cython.final
 cdef class CythonEnvironment:
-    SCORE_LIMIT = 100
-    GIN_BONUS = 25
-    BIG_GIN_BONUS = 31
-
     def __init__(self, opponent_agent: BaseAgent):
         self.__player_1 = Player()
         self.__player_2 = Player()
@@ -50,7 +46,7 @@ cdef class CythonEnvironment:
         self.draw_phase = True
         return self.build_observations(self.player_1)
 
-    def step(self, action: np.ndarray) -> Tuple[np.ndarray, int]:
+    def step(self, np.ndarray action) -> Tuple[np.ndarray, int]:
         # TODO FIRST CARD PRIVILEGE
         """
         Step through one interaction with the environment.
@@ -68,6 +64,8 @@ cdef class CythonEnvironment:
         If they lost the hand, this is set to -1. If they lost the match, this is set to -2.
         Otherwise, this is set to 0.
         """
+        cdef:
+            ActionResult action_result
         if self.draw_phase:
             action_result = self.run_draw(action, self.player_1)
         else:  # Discard phase
@@ -77,22 +75,22 @@ cdef class CythonEnvironment:
             self.reset_hand()
         return self.build_observations(self.player_1), action_result
 
-    def run_draw(self, action: np.ndarray, Player player):
+    def run_draw(self, double[:] action, Player player):
         if len(self.deck) == 2:
             return ActionResult.DRAW
-        if self.wants_to_draw_from_deck(action) or self.discard_pile_is_empty():
+        if CythonEnvironment.wants_to_draw_from_deck(action) or self.discard_pile_is_empty():
             self.draw_from_deck(player)
         else:
             self.draw_from_discard(player)
         return 0
 
-    def run_discard(self, action: np.ndarray, Player player, is_player_1: bool) -> int:
-        if self.wants_to_knock(action) and CythonEnvironment.c_is_gin(player):
+    def run_discard(self, np.ndarray action, Player player, is_player_1: bool) -> int:
+        if CythonEnvironment.wants_to_knock(action) and CythonEnvironment.is_gin(player):
             return self.score_big_gin(player)
         card_to_discard = self.get_card_to_discard(action, player)
         self.discard_card(player, card_to_discard)
-        if self.wants_to_knock(action) and CythonEnvironment.c_can_knock(player):
-            if CythonEnvironment.c_is_gin(player):
+        if CythonEnvironment.wants_to_knock(action) and CythonEnvironment.can_knock(player):
+            if CythonEnvironment.is_gin(player):
                 return self.score_gin(player)
             else:
                 score_delta = self.try_to_knock(player)
@@ -110,8 +108,10 @@ cdef class CythonEnvironment:
         return self.run_discard(opponent_discard_action, self.player_2, False)
 
     @staticmethod
-    def get_card_to_discard(action: np.ndarray, Player player):
+    def get_card_to_discard(np.ndarray action, Player player):
         # Sort the cards by how much the player prefers them. Negative makes it descending.
+        # Keep it this way for benchmarking, convert to first method later.
+        # actions_sorted = np.argsort(action[0:52])[::-1]
         actions_sorted = np.argsort(-action[0:52])
         # Sort the mask booleans (0 or 1 depending on if the player has them) by how much the player prefers them.
         card_mask_sorted = player.hand_mask()[actions_sorted]
@@ -135,7 +135,7 @@ cdef class CythonEnvironment:
         player.add_card_from_discard(drawn_card, new_top_discard)
         self.opponents(player).report_opponent_drew_from_discard(drawn_card, new_top_discard)
 
-    def build_observations(self, player) -> np.ndarray:
+    def build_observations(self, Player player) -> np.ndarray:
         """
         Builds observation array.
         52 elements for card_state
@@ -223,43 +223,34 @@ cdef class CythonEnvironment:
             return -25 - (knocking_player_deadwood - opponent_deadwood)
 
     def score_big_gin(self, Player player) -> ActionResult:
-        score_delta = DeadwoodCounter(self.opponents(player).card_list()).deadwood() + self.BIG_GIN_BONUS
+        score_delta = DeadwoodCounter(self.opponents(player).card_list()).deadwood() + get_big_gin_bonus()
         return self.update_score(player, score_delta)
 
     def score_gin(self, Player player):
-        score_delta = DeadwoodCounter(self.opponents(player).card_list()).deadwood() + self.GIN_BONUS
+        score_delta = DeadwoodCounter(self.opponents(player).card_list()).deadwood() + get_gin_bonus()
         return self.update_score(player, score_delta)
 
-    def update_score(self, Player player, score_delta: int) -> ActionResult:
+    cdef ActionResult update_score(self, Player player, int64_t score_delta):
         player.score += score_delta
-        if player.score >= self.SCORE_LIMIT:
+        if player.score >= get_score_limit():
             return ActionResult.WON_MATCH
         else:
             return ActionResult.WON_HAND
 
     @staticmethod
-    def wants_to_draw_from_deck(action: np.ndarray) -> bool:
+    cdef bint wants_to_draw_from_deck(double[:] action):
         return action[52] >= action[53]
 
     @staticmethod
-    def wants_to_knock(action: np.ndarray) -> bool:
+    cdef bint wants_to_knock(double[:] action):
         return action[54] >= action[55]
 
     @staticmethod
-    def is_gin(player):  #Player class, cannot type hint because of type errors with testing
-        return CythonEnvironment.c_is_gin(<Player> player)
+    cdef bint is_gin(Player player):
+        return DeadwoodCounter(player.card_list()).deadwood() == 0  # TODO refactor this expression separate method
 
     @staticmethod
-    cdef bint c_is_gin(Player player):
-        # print(DeadwoodCounter(player.card_list()).deadwood())
-        return DeadwoodCounter(player.card_list()).deadwood() == 0
-
-    @staticmethod
-    def can_knock(Player player):  # Player class, cannot type hint because of type errors with testing
-        return CythonEnvironment.c_can_knock(player)
-
-    @staticmethod
-    cdef bint c_can_knock(Player player):
+    cdef bint can_knock(Player player):
         return DeadwoodCounter(player.card_list()).deadwood() <= 10
 
     cdef Player opponents(self, Player player):
@@ -333,3 +324,36 @@ cdef class CythonEnvironment:
         self.__discard_pile[self.num_of_discard_cards] = new_card
         self.num_of_discard_cards += 1
         return
+
+    property SCORE_LIMIT:
+        def __get__(self):
+            return get_score_limit()
+        def __set__(self, value):
+            set_score_limit(value)
+
+    property GIN_BONUS:
+        def __get__(self):
+            return get_gin_bonus()
+        def __set__(self, value):
+            set_gin_bonus(value)
+
+    property BIG_GIN_BONUS:
+        def __get__(self):
+            return get_big_gin_bonus()
+        def __set__(self, value):
+            set_big_gin_bonus(value)
+
+cdef int64_t _SCORE_LIMIT[1]
+_SCORE_LIMIT[0] = 100
+cdef int64_t get_score_limit(): return _SCORE_LIMIT[0]
+cdef void set_score_limit(int64_t i): _SCORE_LIMIT[0] = i
+
+cdef int64_t _GIN_BONUS[1]
+_GIN_BONUS[0] = 25
+cdef int64_t get_gin_bonus(): return _GIN_BONUS[0]
+cdef void set_gin_bonus(int64_t i): _GIN_BONUS[0] = i
+
+cdef int64_t _BIG_GIN_BONUS[1]
+_BIG_GIN_BONUS[0] = 31
+cdef int64_t get_big_gin_bonus(): return _BIG_GIN_BONUS[0]
+cdef void set_big_gin_bonus(int64_t i): _BIG_GIN_BONUS[0] = i

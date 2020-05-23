@@ -4,7 +4,7 @@ from GRGym.environment.set cimport Set
 from GRGym.environment.run cimport Run
 cimport numpy as np
 
-from tests.utilities import cython_test, idfn_name_id, idfn_name_id_expected, retrieve_file_tests, retrieve_int, \
+from tests.utilities import cython_wrap, idfn_name_id, idfn_name_id_expected, retrieve_file_tests, retrieve_int, \
     retrieve_int_vector, retrieve_nonzero_indices
 
 def melds_expected(str string):
@@ -28,7 +28,7 @@ def melds_expected(str string):
 @pytest.mark.parametrize("hand,expected_deadwood",
                          retrieve_file_tests(retrieve_nonzero_indices, retrieve_int, idfn_name_id_expected,
                                              file_suffix="environment/deadwood/td_"))
-@cython_test
+@cython_wrap
 def test_deadwood(np.ndarray hand, int expected_deadwood):
     cdef DeadwoodCounter counter = DeadwoodCounter(hand)
     assert counter.deadwood() == expected_deadwood
@@ -36,7 +36,7 @@ def test_deadwood(np.ndarray hand, int expected_deadwood):
 @pytest.mark.parametrize("hand,expected_remaining_cards",
                          retrieve_file_tests(retrieve_nonzero_indices, retrieve_int_vector, idfn_name_id,
                                              file_suffix="environment/deadwood/tc_"))
-@cython_test
+@cython_wrap
 def test_remaining_cards(np.ndarray hand, np.ndarray expected_remaining_cards):
     cdef DeadwoodCounter counter = DeadwoodCounter(hand)
     assert counter.remaining_cards() == set(expected_remaining_cards)
@@ -45,7 +45,7 @@ def test_remaining_cards(np.ndarray hand, np.ndarray expected_remaining_cards):
 @pytest.mark.parametrize("hand,expected_deadwood",
                          retrieve_file_tests(retrieve_nonzero_indices, retrieve_int, idfn_name_id_expected,
                                              file_names=["environment/deadwood/slow_cases_td.txt"]))
-@cython_test
+@cython_wrap
 def test_deadwood_slow(np.ndarray hand, int expected_deadwood):
     cdef DeadwoodCounter counter = DeadwoodCounter(hand)
     assert counter.deadwood() == expected_deadwood
@@ -53,7 +53,7 @@ def test_deadwood_slow(np.ndarray hand, int expected_deadwood):
 @pytest.mark.parametrize("hand,expected_melds",
                          retrieve_file_tests(retrieve_nonzero_indices, melds_expected, idfn_name_id,
                                              file_suffix="environment/deadwood/tm_"))
-@cython_test
+@cython_wrap
 def test_melds(np.ndarray hand, set expected_melds):
     cdef DeadwoodCounter counter = DeadwoodCounter(hand)
     assert counter.melds() == expected_melds
@@ -62,13 +62,13 @@ def test_melds(np.ndarray hand, set expected_melds):
 @pytest.mark.parametrize("hand,expected_melds",
                          retrieve_file_tests(retrieve_nonzero_indices, melds_expected, idfn_name_id,
                                              file_names=["environment/deadwood/slow_cases_tm.txt"]))
-@cython_test
+@cython_wrap
 def test_melds_slow(np.ndarray hand, set expected_melds):
     cdef DeadwoodCounter counter = DeadwoodCounter(hand)
     assert counter.melds() == expected_melds
 
 @pytest.mark.parametrize("rank,expected_deadwood",
                          zip([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10]))
-@cython_test
+@cython_wrap
 def test_deadwood_val(rank, expected_deadwood):
     assert DeadwoodCounter.deadwood_val(rank) == expected_deadwood

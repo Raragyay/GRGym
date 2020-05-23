@@ -1,7 +1,7 @@
 from GRGym.environment.run cimport Run
 import pytest
 
-from tests.utilities import cython_test
+from tests.utilities import cython_wrap
 
 def base_run_class():
     return Run
@@ -25,7 +25,7 @@ def build_test_data():
     return test_data
 
 @pytest.mark.parametrize("start, end, expected", build_test_data())
-@cython_test
+@cython_wrap
 def test_connectable_cards(run_class, start, end, expected):
     cdef Run run = run_class(start, end)
     assert run.connectable_cards() == expected
