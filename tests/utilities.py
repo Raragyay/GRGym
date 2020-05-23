@@ -85,16 +85,3 @@ def idfn_name_id(file_name, expected, test_id):
 
 def idfn_name_id_expected(file_name, expected, test_num):
     return f"{file_name}.{test_num}-{expected}"
-
-
-def cython_wrap(signature):
-    sig = inspect.signature(signature)
-    print(sig.parameters)
-    code = f'lambda {",".join(sig.parameters.keys())}: func{sig}'
-    print(code)
-
-    def decorator(func):
-        return wraps(func)(eval(code, {
-            'func': func}, {}))
-
-    return decorator(signature)

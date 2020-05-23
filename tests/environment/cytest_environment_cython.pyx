@@ -1,5 +1,4 @@
-from typing import Callable
-
+include "cython_wrapper.pxi"
 import numpy as np
 cimport numpy as np
 import pytest
@@ -7,14 +6,14 @@ from GRGym.agent import BaseAgent
 from GRGym.environment.cythonenvironment cimport CythonEnvironment
 from GRGym.environment.player cimport Player
 from GRGym.environment.action_result cimport ActionResult
+from tests.utilities import idfn_id_expected, retrieve_boolean, retrieve_file_tests, \
+    retrieve_float_vector, retrieve_int, retrieve_nonzero_indices
 
 """
 When testing static methods, using fixtures to pass the class name is ineffective because the cdef functions are not 
 discoverable from Python code. Cython static methods can only be called from the class name and not from an object. 
 """
 
-from tests.utilities import cython_wrap, idfn_id_expected, retrieve_boolean, retrieve_file_tests, \
-    retrieve_float_vector, retrieve_int, retrieve_nonzero_indices
 
 def base_agent_class():
     return BaseAgent

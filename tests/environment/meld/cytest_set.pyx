@@ -1,7 +1,6 @@
+include "cython_wrapper.pxi"
 import pytest
 from GRGym.environment.set cimport Set
-
-from tests.utilities import cython_wrap
 
 def base_set_class():
     return Set
@@ -15,3 +14,9 @@ def test_connectable_cards():
     for i in range(13):
         test_set = Set(i)
         assert test_set.connectable_cards() == {suit * 13 + i for suit in range(4)}
+
+@cython_wrap
+def test_eq(set_class):
+    assert set_class(1) != 0
+    assert set_class(1) != set_class(2)
+    assert set_class(2) == set_class(2)

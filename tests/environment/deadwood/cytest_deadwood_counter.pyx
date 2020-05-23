@@ -1,10 +1,11 @@
+include "cython_wrapper.pxi"
 import pytest
 from GRGym.environment.deadwood_counter cimport DeadwoodCounter
 from GRGym.environment.set cimport Set
 from GRGym.environment.run cimport Run
 cimport numpy as np
 
-from tests.utilities import cython_wrap, idfn_name_id, idfn_name_id_expected, retrieve_file_tests, retrieve_int, \
+from tests.utilities import idfn_name_id, idfn_name_id_expected, retrieve_file_tests, retrieve_int, \
     retrieve_int_vector, retrieve_nonzero_indices
 
 def melds_expected(str string):

@@ -1,10 +1,8 @@
 import numpy as np
 
-from .card_enums import Rank, Suit
+from .card_enums cimport Rank, Suit
 from libc.stdint cimport int64_t
 
-suit_symbols = ['D', 'C', 'H', 'S']
-rank_symbols = ['A', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K']
 cdef class Hand:
     """
     A representation of the cards in a hand. Stored in a boolean array.
@@ -22,16 +20,16 @@ cdef class Hand:
     def cards(self, new_arr):
         self.__cards = new_arr
 
-    cpdef bint has_card(self, int64_t card_val):
+    cdef bint has_card(self, int64_t card_val):
         return self.__cards[card_val]
 
-    cpdef void add_card(self, int64_t card_val):
+    cdef void add_card(self, int64_t card_val):
         self.__cards[card_val] = True
 
-    cpdef void remove_card(self, int64_t card_val):
+    cdef void remove_card(self, int64_t card_val):
         self.__cards[card_val] = False
 
-    cpdef np.ndarray card_list(self):
+    cdef np.ndarray card_list(self):
         return np.nonzero(self.cards)[0]
 
     def __str__(self):
@@ -46,18 +44,24 @@ cdef class Hand:
         card_list = self.card_list()
         out = "Hand: "
         for card_val in card_list:
-            out += f"{self.card_shorthand(card_val)} "
+            out += f"{Hand.card_shorthand(card_val)} "
         return out
 
-    @classmethod
-    def card_shorthand(cls, card_val: int):
+    @staticmethod
+    cdef card_shorthand(int64_t card_val):
         card = divmod(card_val, 13)
         return f"{rank_symbols[card[1]]}{suit_symbols[card[0]]}"
 
     def __eq__(self, other):
-        return isinstance(other, Hand) and np.array_equal(self.cards, other.cards)
+        if isinstance(other, Hand):
+            return np.array_equal(self.cards, other.cards)
+        else:
+            return False
 
-    def copy(self):
+    cdef copy(self):
         new_hand = Hand()
         new_hand.cards = self.cards.copy()
         return new_hand
+
+cdef list suit_symbols = ['D', 'C', 'H', 'S']
+cdef list rank_symbols = ['A', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K']

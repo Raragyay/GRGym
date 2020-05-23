@@ -1,7 +1,6 @@
+include "cython_wrapper.pxi"
 from GRGym.environment.run cimport Run
 import pytest
-
-from tests.utilities import cython_wrap
 
 def base_run_class():
     return Run
