@@ -1,14 +1,19 @@
 language: python
+dist: xenial
+os: linux
+cache: pip
 
 jobs:
   include:
-    - name: "Python on Linux"
+    - name: "Python 3.6 on Linux"
       python:  # this works for Linux but is ignored on macOS or Windows
         - "3.6"
-        - "3.7"
-        - "3.8"
-        - "3.8-dev"
-        - "nightly"
+    - name: "Python 3.7 on Linux"
+        - python:
+            - "3.7"
+    - name: "Python 3.8 on Linux"
+        - python:
+            - "3.8"
     - name: "Python 3.7.4 on macOS"
       os: osx
       osx_image: xcode11.2  # Python 3.7.4 running on macOS 10.14.4
@@ -23,12 +28,15 @@ jobs:
 
 install:
   - pip3 install --upgrade pip
+  # Linux doesn't support installing packages for only the user since it is run in a venv.
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then pip install -r requirements.txt; else pip install --user -r requirements.txt; fi
+
+before_script:
+  - python3 setup.py build_ext --inplace || python setup.py build_ext --inplace
+  - python3 setup.py install || python setup.py install
+  - python3 compile_tests.py build_ext --inplace || python compile_tests.py build_ext --inplace
 
 # 'python' points to Python 2.7 on macOS but points to Python 3.8 on Linux and Windows
 # 'python3' is a 'command not found' error on Windows but 'py' works on Windows only
 script:
-  - python3 setup.py build_ext --inplace || python setup.py build_ext --inplace
-  - python3 setup.py install || python setup.py install
-  - python3 compile_tests.py build_ext --inplace || python compile_tests.py build_ext --inplace
   - python3 -m pytest || python -m pytest
