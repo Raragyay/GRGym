@@ -4,7 +4,6 @@ jobs:
   include:
     - name: "Python on Linux"
       python:  # this works for Linux but is ignored on macOS or Windows
-        - "3.4"
         - "3.5"
         - "3.6"
         - "3.7"
