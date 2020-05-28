@@ -58,8 +58,8 @@ cdef class Hand:
         else:
             return False
 
-    cdef copy(self):
-        new_hand = Hand()
+    cdef Hand copy(self):
+        cdef Hand new_hand = Hand()
         new_hand.cards = self.cards.copy()
         return new_hand
 

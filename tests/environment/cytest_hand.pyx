@@ -5,10 +5,12 @@ import pytest
 
 from GRGym.environment.hand cimport Hand
 
+def base_hand():
+    return Hand()
+
 @pytest.fixture
 def test_hand():
-    test_hand = Hand()
-    return test_hand
+    return base_hand()
 
 @cython_wrap
 def idfn_card_shorthand(val):
@@ -67,3 +69,15 @@ def test_card_list(Hand test_hand):
         test_hand.add_card(i)
         test_list = np.arange(i + 1)
         np.testing.assert_array_equal(test_hand.card_list(), test_list)
+
+@cython_wrap
+def test_copy(Hand test_hand):
+    cdef Hand new_hand
+    for i in range(51, -1, -1):
+        test_hand.add_card(i)
+        new_hand = test_hand.copy()
+        assert test_hand == new_hand
+    for i in range(0, 52):
+        test_hand.remove_card(i)
+        new_hand = test_hand.copy()
+        assert test_hand == new_hand

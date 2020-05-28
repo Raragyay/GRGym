@@ -153,3 +153,18 @@ def test_eq(Player test_player):
     assert not test_player == temp_player
     test_player.score = 5
     assert test_player == temp_player
+
+@cython_wrap
+def test_copy(Player test_player):
+    cdef Player temp_player
+    for i in range(52):
+        test_player.add_card_from_deck(i)
+        temp_player = test_player.copy()
+        assert test_player == temp_player
+    for i in range(52):
+        test_player.add_card_from_discard(i, 0)
+        temp_player = test_player.copy()
+        assert test_player == temp_player
+    temp_player.score = 5
+    temp_player = test_player.copy()
+    assert test_player == temp_player

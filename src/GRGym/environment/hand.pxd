@@ -13,4 +13,4 @@ cdef class Hand:
 
     @staticmethod
     cdef card_shorthand(int64_t card_val)
-    cdef copy(self)
+    cdef Hand copy(self)

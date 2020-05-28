@@ -71,7 +71,7 @@ cdef class Player:
         return np.copy(self.hand.cards)
 
     cdef Player copy(self):
-        new_player = Player()
+        cdef Player new_player = Player()
         new_player.hand = self.hand.copy()
         new_player.__card_states = self.__card_states.copy()
         new_player.score = self.score

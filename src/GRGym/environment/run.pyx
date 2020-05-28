@@ -1,7 +1,9 @@
 from .meld cimport Meld
+from .card_enums cimport Rank, Suit
+from libc.stdint cimport int8_t
 
 cdef class Run(Meld):
-    def __init__(self, start: int, end: int):
+    def __init__(self, int8_t start, int8_t end):
         self.start = start
         self.end = end
         self.suit = start // 13
@@ -15,13 +17,14 @@ cdef class Run(Meld):
         return result
 
     def __hash__(self):
-        return hash(self.__str__())
+        return hash(self.__repr__())
 
     def __str__(self):
-        return f"R-{self.suit}-{self.start}-{self.end}"
+        return f"Run from {Rank(self.start).name.title()} of {Suit(self.suit).name.title()} to " \
+               f"{Rank(self.end).name.title()} of {Suit(self.suit).name.title()}"
 
     def __repr__(self):
-        return self.__str__()  # TODO MAKE NICER
+        return f"R-{self.suit}-{self.start}-{self.end}"
 
     def __eq__(self, other):
         if isinstance(other, Run):
