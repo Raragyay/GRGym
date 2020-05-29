@@ -345,7 +345,8 @@ cdef class DeadwoodCounter:
                 mask >>= 1
             if run_started: # If there is a run that hasn't been finished yet
                 run_started = False
-                melds.add(Run(starting_card, i * 13 + j))
+                # Since j represents the queen card, we increment by 1 to represent the king card
+                melds.add(Run(starting_card, i * 13 + j + 1))
 
         for i in range(13):
             if mask & 1 == 1:

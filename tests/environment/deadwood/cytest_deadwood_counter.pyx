@@ -57,7 +57,7 @@ def test_deadwood_slow(np.ndarray hand, int expected_deadwood):
 @cython_wrap
 def test_melds(np.ndarray hand, set expected_melds):
     cdef DeadwoodCounter counter = DeadwoodCounter(hand)
-    assert counter.melds() == expected_melds
+    assert counter.melds() == expected_melds, f'{counter.melds(), expected_melds}'
 
 @pytest.mark.slow
 @pytest.mark.parametrize("hand,expected_melds",
