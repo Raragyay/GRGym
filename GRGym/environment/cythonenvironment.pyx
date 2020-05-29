@@ -6,7 +6,7 @@ from typing import Dict, Tuple
 import cython
 import numpy as np
 
-from src.GRGym.agent import BaseAgent
+from GRGym.agent import BaseAgent
 from .action_result cimport ActionResult
 from .player cimport Player, NO_CARD
 from .player import Player

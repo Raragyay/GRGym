@@ -3,6 +3,8 @@ import numpy as np
 from .card_enums cimport Rank, Suit
 from libc.stdint cimport int64_t
 
+cdef int a = 3
+
 cdef class Hand:
     """
     A representation of the cards in a hand. Stored in a boolean array.

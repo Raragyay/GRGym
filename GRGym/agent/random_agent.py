@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.GRGym.agent import BaseAgent
+from GRGym.agent import BaseAgent
 
 
 class RandomAgent(BaseAgent):

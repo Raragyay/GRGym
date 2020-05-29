@@ -27,8 +27,8 @@ cdef class Run(Meld):
         return f"R-{self.suit}-{self.start}-{self.end}"
 
     def __eq__(self, other):
-        if isinstance(other, Run):
+        try:
             casted = <Run> other
             return self.start == casted.start and self.end == casted.end
-        else:
+        except TypeError:
             return False

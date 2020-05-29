@@ -1,8 +1,8 @@
 import numpy as np
 from scipy.signal import convolve2d
 
-from src.GRGym.agent import BaseAgent
-from src.GRGym.environment.card_state import CardState
+from GRGym.agent import BaseAgent
+from GRGym.environment.card_state import CardState
 
 
 class HandBuiltAgent(BaseAgent):

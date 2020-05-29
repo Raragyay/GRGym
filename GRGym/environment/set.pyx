@@ -22,8 +22,8 @@ cdef class Set(Meld):
         return f"S{self.rank}"
 
     def __eq__(self, other):
-        if isinstance(other, Set):
+        try:
             casted = <Set> other
             return self.rank == casted.rank
-        else:
+        except TypeError:
             return False

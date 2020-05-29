@@ -2,7 +2,7 @@ import os
 
 import numpy
 from Cython.Build import cythonize
-from setuptools import Extension, find_namespace_packages, setup
+from setuptools import Extension, find_packages, setup
 
 
 def scan_dir(dir=None, files=[]):
@@ -24,18 +24,17 @@ def build_extension(ext_name):
     )
 
 
-os.chdir('src')
-ext_names = scan_dir()
+ext_names = scan_dir('GRGym')
 extensions = [build_extension(name) for name in ext_names]
 
 setup(
     name="GRGym",
-    packages=find_namespace_packages(),
+    packages=find_packages(),
     ext_modules=cythonize(extensions,
                           compiler_directives={
                               'language_level': '3',
                               'embedsignature': 'True',
-                              'linetrace'     : True
+                              'linetrace'     : 'True'
                           },
                           annotate=True),
     zip_safe=False,
