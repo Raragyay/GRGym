@@ -34,7 +34,8 @@ setup(
     ext_modules=cythonize(extensions,
                           compiler_directives={
                               'language_level': '3',
-                              'embedsignature': 'True'
+                              'embedsignature': 'True',
+                              'linetrace'     : True
                           },
                           annotate=True),
     zip_safe=False,
