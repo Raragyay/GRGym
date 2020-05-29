@@ -1,9 +1,0 @@
-[run]
-plugins = Cython.Coverage
-source = GRGym
-
-[report]
-omit =
-    *__init__.py
-
-# exclude_lines doesn't work with .pyx files.
