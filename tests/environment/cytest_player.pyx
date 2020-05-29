@@ -134,7 +134,7 @@ def test_copy(Player test_player):
     np.testing.assert_array_equal(copy_player.card_states, test_player.card_states)
 
 @cython_wrap
-def test_eq(Player test_player):
+def test_eq_cards(Player test_player):
     cdef Player temp_player
     for i in range(52):
         temp_player = test_player.copy()
@@ -148,11 +148,21 @@ def test_eq(Player test_player):
         assert not test_player == temp_player
         test_player.add_card_from_discard(i, 0)
         assert test_player == temp_player
-    temp_player = test_player.copy()
+
+@cython_wrap
+def test_eq_score(Player test_player):
+    cdef Player temp_player = test_player.copy()
+    test_player.score = 0
     temp_player.score = 5
     assert not test_player == temp_player
     test_player.score = 5
     assert test_player == temp_player
+
+@cython_wrap
+def test_eq_type(Player test_player):
+    cdef int wrong_type = 2
+    assert test_player != wrong_type
+    assert wrong_type != test_player
 
 @cython_wrap
 def test_copy(Player test_player):
