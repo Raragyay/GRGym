@@ -1,8 +1,13 @@
 /venv/
 *.pytest_cache
 *__pytest_cache__/
+*__pycache__/
 /.idea/
 build/
 dist/
 htmlcov/
 *.egg-info/
+# Ignore build_ext files. In the future, maybe include so that users can compile without Cython.
+*.c
+*.pyd
+*.html

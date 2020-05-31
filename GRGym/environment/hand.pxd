@@ -4,7 +4,8 @@ cimport numpy as np
 
 
 cdef class Hand:
-    cdef uint8_t[:] __cards #uint8_t is the C version of np.bool
+    cdef:
+        uint8_t[:] __cards # uint8_t is the C version of np.bool
 
     cdef bint has_card(self, int64_t card_val)
     cdef void add_card(self, int64_t card_val)
