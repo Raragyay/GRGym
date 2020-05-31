@@ -18,3 +18,8 @@ cpdef enum Suit:
     CLUBS = 1
     HEARTS = 2
     SPADES = 3
+
+cdef list suit_symbols()
+cdef list suit_names()
+cdef list rank_symbols()
+cdef list rank_names()

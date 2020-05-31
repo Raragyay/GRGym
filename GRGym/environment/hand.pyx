@@ -1,6 +1,6 @@
 import numpy as np
 
-from .card_enums cimport Rank, Suit
+from .card_enums cimport rank_symbols, rank_names, suit_symbols, suit_names
 from libc.stdint cimport int64_t
 
 cdef int a = 3
@@ -39,7 +39,7 @@ cdef class Hand:
         out = "Hand: \n"
         for card_val in card_list:
             card = divmod(card_val, 13)
-            out += f"{rank_names[card[1]]} of {suit_names[card[0]]}\n"
+            out += f"{rank_names()[card[1]]} of {suit_names()[card[0]]}\n"
         return out
 
     def __repr__(self):
@@ -52,7 +52,7 @@ cdef class Hand:
     @staticmethod
     cdef card_shorthand(int64_t card_val):
         card = divmod(card_val, 13)
-        return f"{rank_symbols[card[1]]}{suit_symbols[card[0]]}"
+        return f"{rank_symbols()[card[1]]}{suit_symbols()[card[0]]}"
 
     def __eq__(self, other):
         if isinstance(other, Hand):
@@ -64,8 +64,3 @@ cdef class Hand:
         cdef Hand new_hand = Hand()
         new_hand.cards = self.cards.copy()
         return new_hand
-
-cdef list suit_symbols = ['D', 'C', 'H', 'S']
-cdef list suit_names = ['Diamonds', 'Clubs', 'Hearts', 'Spades']
-cdef list rank_symbols = ['A', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K']
-cdef list rank_names = ['Ace', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'Jack', 'Queen', 'King']

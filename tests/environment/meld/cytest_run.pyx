@@ -28,3 +28,20 @@ def build_test_data():
 def test_connectable_cards(run_class, start, end, expected):
     cdef Run run = run_class(start, end)
     assert run.connectable_cards() == expected
+
+@cython_wrap
+def test_eq(run_class):
+    assert run_class(1, 3) != 0
+    assert run_class(1, 3) != "string"
+    assert run_class(1, 2) != run_class(2, 3)
+    assert run_class(2, 4) != run_class(3, 4)
+    assert run_class(2, 5) == run_class(2, 5)
+
+@cython_wrap
+def test_str_repr(run_class):
+    cdef Run run = run_class(0, 2)
+    assert str(run)  #Test that no errors occur
+    assert repr(run)
+    zero_two_string = repr(run)
+    run = run_class(31, 35)
+    assert repr(run) != zero_two_string
