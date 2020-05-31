@@ -19,8 +19,5 @@ cdef class Player:
     cdef void update_card_down(self, int8_t previous_top_of_discard)
     cdef bint has_card(self, int8_t card_val)
     cdef np.ndarray card_list(self)
-    cdef np.ndarray hand_mask(self)
     cdef Player copy(self)
-
-cpdef inline int8_t NO_CARD():
-    return -1
+    cdef np.ndarray hand_mask(self)

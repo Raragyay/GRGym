@@ -16,11 +16,11 @@ cdef class Hand:
 
     @property
     def cards(self):
-        return np.asarray(self.__cards, dtype=np.bool)
+        return np.asarray(self.__cards, dtype=np.bool).copy()
 
     @cards.setter
     def cards(self, new_arr):
-        self.__cards = new_arr
+        self.__cards = new_arr.copy()
 
     cdef bint has_card(self, int64_t card_val):
         return self.__cards[card_val]

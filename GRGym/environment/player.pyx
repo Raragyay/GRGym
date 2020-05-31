@@ -13,11 +13,19 @@ cdef class Player:
 
     @property
     def card_states(self):
-        return np.asarray(self.__card_states, dtype=np.int8)
+        """
+        Returns a copy of the internal card_state array.
+        :return:
+        """
+        return np.asarray(self.__card_states, dtype=np.int8).copy()
 
     @card_states.setter
-    def card_states(self, new_arr):
-        self.__card_states = new_arr
+    def card_states(self, np.ndarray new_arr):
+        self.__card_states = new_arr.copy()
+
+    @property
+    def NO_CARD(self):
+        return -1
 
     cdef void reset_hand(self):
         self.hand = Hand()
@@ -46,7 +54,7 @@ cdef class Player:
         self.update_card_down(previous_top)
 
     cdef void update_card_to_top(self, int8_t new_top_of_discard):
-        if new_top_of_discard == NO_CARD():
+        if new_top_of_discard == self.NO_CARD:
             return
         if self.__card_states[new_top_of_discard] == CardState.DISCARD_THEIRS:
             self.__card_states[new_top_of_discard] = CardState.DISCARD_THEIRS_TOP
@@ -54,7 +62,7 @@ cdef class Player:
             self.__card_states[new_top_of_discard] = CardState.DISCARD_MINE_TOP
 
     cdef void update_card_down(self, int8_t previous_top_of_discard):
-        if previous_top_of_discard == NO_CARD():
+        if previous_top_of_discard == self.NO_CARD:
             return
         if self.__card_states[previous_top_of_discard] == CardState.DISCARD_THEIRS_TOP:
             self.__card_states[previous_top_of_discard] = CardState.DISCARD_THEIRS
@@ -81,16 +89,14 @@ cdef class Player:
         if isinstance(other, Player):
             casted = <Player> other
             return self.hand == casted.hand and np.array_equal(self.__card_states,
-                                                               casted.__card_states) and self.score == \
-                   casted.score
+                                                               casted.__card_states) and self.score == casted.score
         else:
             return False
 
     def __repr__(self):
-        return f'Player: {self.hand.__repr__()} | {self.score} | {self.__card_states}'
+        return f'Player: {repr(self.hand)} | Score: {self.score} | Card State: {self.card_states}'
 
     def __str__(self):
         return f'Player:\n' \
-               f'Hand: {self.hand}\n' \
+               f'{self.hand}' \
                f'Score: {self.score}'
-
