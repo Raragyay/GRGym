@@ -54,7 +54,7 @@ def test_remove_card(Hand test_hand):
         assert not test_hand.has_card(i)
 
 @cython_wrap
-def test_eq(Hand test_hand):
+def test_eq_cards(Hand test_hand):
     for i in range(52):
         new_hand = Hand()
         new_hand.cards = test_hand.cards.copy()
@@ -62,6 +62,26 @@ def test_eq(Hand test_hand):
         assert not test_hand == new_hand
         test_hand.add_card(i)
         assert test_hand == new_hand
+
+@cython_wrap
+def test_eq_type(Hand test_hand):
+    cdef int wrong_type_int = 2
+    cdef str wrong_type_str = "fake"
+    assert test_hand != wrong_type_int
+    assert test_hand != wrong_type_str
+
+@cython_wrap
+def test_str_repr(Hand test_hand):
+    #This is just to test that the str and repr functions return something.
+    blank_str = str(test_hand)
+    blank_repr = repr(test_hand)
+    test_hand.add_card(3)
+    test_hand.add_card(10)
+    assert str(test_hand) != blank_str  # We want the representation to mean something
+    assert repr(test_hand) != blank_repr
+    repr_with_data = repr(test_hand)
+    test_hand.add_card(17)
+    assert repr_with_data != repr(test_hand)  # Different hands should have different repr
 
 @cython_wrap
 def test_card_list(Hand test_hand):

@@ -1,5 +1,5 @@
 import os
-
+import sys
 import numpy
 from Cython.Build import cythonize
 from setuptools import Extension, find_packages, setup
@@ -27,15 +27,19 @@ def build_extension(ext_name):
 ext_names = scan_dir('GRGym')
 extensions = [build_extension(name) for name in ext_names]
 
+compiler_directives = {
+    'language_level': '3',
+    'embedsignature': True,
+}
+# Only add line tracing directive if distutils tracing macro is specified from CLI.
+if 'CYTHON_TRACE_NOGIL' in sys.argv:
+    compiler_directives['linetrace'] = True
+
 setup(
     name="GRGym",
     packages=find_packages(),
     ext_modules=cythonize(extensions,
-                          compiler_directives={
-                              'language_level': '3',
-                              'embedsignature': 'True',
-                              'linetrace'     : 'True'
-                          },
+                          compiler_directives=compiler_directives,
                           annotate=True),
     zip_safe=False,
     package_data={

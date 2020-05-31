@@ -2,7 +2,7 @@ import os
 
 import numpy
 from Cython.Build import cythonize
-from setuptools import Extension, find_namespace_packages, setup
+from setuptools import Extension, setup
 
 
 def scan_dir(dir=None, files=[]):
@@ -32,6 +32,7 @@ setup(
     ext_modules=cythonize(extensions,
                           compiler_directives={
                               'language_level': '3',
-                              'binding': 'True'
+                              # We bind the functions so that they can be discovered by pytest.
+                              'binding'       : 'True'
                           }),
 )

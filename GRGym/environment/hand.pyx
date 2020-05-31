@@ -39,7 +39,7 @@ cdef class Hand:
         out = "Hand: \n"
         for card_val in card_list:
             card = divmod(card_val, 13)
-            out += f"{Rank(card[1]).name.title()} of {Suit(card[0]).name.title()}\n"
+            out += f"{rank_names[card[1]]} of {suit_names[card[0]]}\n"
         return out
 
     def __repr__(self):
@@ -66,4 +66,6 @@ cdef class Hand:
         return new_hand
 
 cdef list suit_symbols = ['D', 'C', 'H', 'S']
+cdef list suit_names = ['Diamonds', 'Clubs', 'Hearts', 'Spades']
 cdef list rank_symbols = ['A', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K']
+cdef list rank_names = ['Ace', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'Jack', 'Queen', 'King']
