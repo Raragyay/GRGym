@@ -209,19 +209,16 @@ def test_card_state_property(Player test_player):
             assert test_player.__card_states[i] == j - 1
 
             mock_card_state[i] = j
-            assert test_player.card_states[i] == j - 1  # player should make a copy of the card state
-            assert test_player.__card_states[i] == j - 1
+            assert test_player.card_states[i] == j  # player should reference the given array
+            assert test_player.__card_states[i] == j
 
             mock_card_state[i] = j - 1
+            assert test_player.card_states[i] == j - 1
+            assert test_player.__card_states[i] == j - 1
             test_player.card_states[i] = j
-            assert test_player.__card_states[i] == j - 1  # player given property should be a copy and not a
-            # reflection of the internal array
-            assert mock_card_state[i] == j - 1
-
-            test_player.__card_states[i] = j
-            assert test_player.card_states[i] == j
-            assert mock_card_state[i] == j - 1
-            mock_card_state[i] = j
+            assert test_player.__card_states[
+                       i] == j  # player given property should be a reflection of the internal array
+            assert mock_card_state[i] == j
 
 @cython_wrap
 def test_str_repr(Player test_player):

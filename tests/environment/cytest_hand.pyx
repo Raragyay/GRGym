@@ -56,8 +56,7 @@ def test_remove_card(Hand test_hand):
 @cython_wrap
 def test_eq_cards(Hand test_hand):
     for i in range(52):
-        new_hand = Hand()
-        new_hand.cards = test_hand.cards
+        new_hand = test_hand.copy()
         new_hand.add_card(i)
         assert not test_hand == new_hand
         test_hand.add_card(i)
@@ -114,16 +113,15 @@ def test_cards_property(Hand test_hand):
         assert test_hand.__cards[i] == 0
 
         mock_card_state[i] = 1
-        assert test_hand.cards[i] == 0  # hand should make a copy of the parameter given
-        assert test_hand.__cards[i] == 0
+        assert test_hand.cards[i] == 1  # hand should reference
+        assert test_hand.__cards[i] == 1
 
         mock_card_state[i] = 0
         test_hand.cards[i] = 1
-        assert test_hand.__cards[i] == 0  # hand __get__ property should be a copy and not a reflection of the
-        # internal array
-        assert mock_card_state[i] == 0
+        assert test_hand.__cards[i] == 1  # hand __get__ property should be a reflection of the internal array
+        assert mock_card_state[i] == 1
 
         test_hand.__cards[i] = 1
         assert test_hand.cards[i] == 1
-        assert mock_card_state[i] == 0
+        assert mock_card_state[i] == 1
         mock_card_state[i] = 1

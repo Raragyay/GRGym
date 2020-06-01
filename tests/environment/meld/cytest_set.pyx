@@ -20,3 +20,12 @@ def test_eq(set_class):
     assert set_class(1) != 0
     assert set_class(1) != set_class(2)
     assert set_class(2) == set_class(2)
+
+@cython_wrap
+def test_str_repr(set_class):
+    cdef Set set = set_class(0)
+    assert str(set)  #Test that no errors occur
+    assert repr(set)
+    zero_string = repr(set)
+    set = set_class(12)
+    assert repr(set) != zero_string

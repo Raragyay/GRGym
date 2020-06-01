@@ -16,11 +16,20 @@ cdef class Hand:
 
     @property
     def cards(self):
-        return np.asarray(self.__cards, dtype=np.bool).copy()
+        """
+        Returns the numpy object of the memory view.
+        :return:
+        """
+        return np.asarray(self.__cards, dtype=np.bool)
 
     @cards.setter
     def cards(self, new_arr):
-        self.__cards = new_arr.copy()
+        """
+        Makes the internal cards property reference the array given.
+        :param new_arr:
+        :return:
+        """
+        self.__cards = new_arr
 
     cdef bint has_card(self, int64_t card_val):
         return self.__cards[card_val]

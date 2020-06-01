@@ -17,11 +17,11 @@ cdef class Player:
         Returns a copy of the internal card_state array.
         :return:
         """
-        return np.asarray(self.__card_states, dtype=np.int8).copy()
+        return np.asarray(self.__card_states, dtype=np.int8)
 
     @card_states.setter
     def card_states(self, np.ndarray new_arr):
-        self.__card_states = new_arr.copy()
+        self.__card_states = new_arr
 
     @property
     def NO_CARD(self):
