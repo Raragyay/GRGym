@@ -14,7 +14,6 @@ When testing static methods, using fixtures to pass the class name is ineffectiv
 discoverable from Python code. Cython static methods can only be called from the class name and not from an object. 
 """
 
-
 def base_agent_class():
     return BaseAgent
 
@@ -68,6 +67,14 @@ def test_is_gin(player_with_cards, np.ndarray cards_in_hand, bint expected):
 @cython_wrap
 def test_wants_to_knock(np.ndarray actions, bint expected):
     assert CythonEnvironment.wants_to_knock(actions) == expected
+
+@pytest.mark.parametrize("actions,expected", retrieve_file_tests(retrieve_float_vector, retrieve_boolean,
+                                                                 idfn_id_expected,
+                                                                 file_names=[
+                                                                     "environment/wants_to_draw_from_deck_cases.txt"]))
+@cython_wrap
+def test_wants_to_draw_from_deck(np.ndarray actions, bint expected):
+    assert CythonEnvironment.wants_to_draw_from_deck(actions) == expected
 
 @cython_wrap
 def test_update_score(CythonEnvironment test_env, Player test_player):
