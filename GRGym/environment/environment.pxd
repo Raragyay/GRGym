@@ -4,7 +4,7 @@ from libc.stdint cimport int8_t, int64_t
 from .action_result cimport ActionResult
 cimport numpy as np
 
-cdef class CythonEnvironment:
+cdef class Environment:
     cdef:
         Player __player_1, __player_2
         object opponent_agent

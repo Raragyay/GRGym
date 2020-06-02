@@ -3,7 +3,7 @@ import numpy as np
 cimport numpy as np
 import pytest
 from GRGym.agent import BaseAgent
-from GRGym.environment.cythonenvironment cimport CythonEnvironment
+from GRGym.environment.environment cimport Environment
 from GRGym.environment.player cimport Player
 from GRGym.environment.action_result cimport ActionResult
 from tests.utilities import idfn_id_expected, retrieve_boolean, retrieve_file_tests, \
@@ -13,16 +13,6 @@ from tests.utilities import idfn_id_expected, retrieve_boolean, retrieve_file_te
 When testing static methods, using fixtures to pass the class name is ineffective because the cdef functions are not 
 discoverable from Python code. Cython static methods can only be called from the class name and not from an object. 
 """
-
-def base_agent_class():
-    return BaseAgent
-
-def base_env_class():
-    return CythonEnvironment  # TODO change to testing agent maybe?
-
-def base_player_class():
-    return Player
-
 def generate_player_with_cards_func(Player player):
     def player_factory(np.ndarray card_list):
         for card in card_list:
@@ -30,54 +20,41 @@ def generate_player_with_cards_func(Player player):
         return player
     return player_factory
 
-@pytest.fixture
-def test_env():
-    return base_env_class()(base_agent_class()())
-
-@pytest.fixture
-def test_player():
-    return base_player_class()()
-
-@pytest.fixture
-@cython_wrap
-def player_with_cards(Player test_player):
-    def player_factory(np.ndarray card_list):
-        for card in card_list:
-            test_player.add_card_from_deck(card)
-        return test_player
-    return player_factory
-
 @pytest.mark.parametrize("cards_in_hand,expected", retrieve_file_tests(retrieve_nonzero_indices, retrieve_boolean,
                                                                        idfn_id_expected,
-                                                                       file_names=["environment/can_knock_cases.txt"]))
+                                                                       file_names=[
+                                                                           "environment/environment/can_knock_cases.txt"]))
 @cython_wrap
 def test_can_knock(player_with_cards, np.ndarray cards_in_hand, bint expected):
-    assert CythonEnvironment.can_knock(player_with_cards(cards_in_hand)) == expected
+    assert Environment.can_knock(
+        player_with_cards(cards_in_hand)) == expected, f"{player_with_cards(cards_in_hand)} | {expected}"
 
 @pytest.mark.parametrize("cards_in_hand,expected", retrieve_file_tests(retrieve_nonzero_indices, retrieve_boolean,
                                                                        idfn_id_expected,
-                                                                       file_names=["environment/is_gin_cases.txt"]))
+                                                                       file_names=[
+                                                                           "environment/environment/is_gin_cases.txt"]))
 @cython_wrap
 def test_is_gin(player_with_cards, np.ndarray cards_in_hand, bint expected):
-    assert CythonEnvironment.is_gin(player_with_cards(cards_in_hand)) == expected
-
-@pytest.mark.parametrize("actions,expected", retrieve_file_tests(retrieve_float_vector, retrieve_boolean,
-                                                                 idfn_id_expected,
-                                                                 file_names=["environment/wants_to_knock_cases.txt"]))
-@cython_wrap
-def test_wants_to_knock(np.ndarray actions, bint expected):
-    assert CythonEnvironment.wants_to_knock(actions) == expected
+    assert Environment.is_gin(player_with_cards(cards_in_hand)) == expected
 
 @pytest.mark.parametrize("actions,expected", retrieve_file_tests(retrieve_float_vector, retrieve_boolean,
                                                                  idfn_id_expected,
                                                                  file_names=[
-                                                                     "environment/wants_to_draw_from_deck_cases.txt"]))
+                                                                     "environment/environment/wants_to_knock_cases.txt"]))
+@cython_wrap
+def test_wants_to_knock(np.ndarray actions, bint expected):
+    assert Environment.wants_to_knock(actions) == expected
+
+@pytest.mark.parametrize("actions,expected", retrieve_file_tests(retrieve_float_vector, retrieve_boolean,
+                                                                 idfn_id_expected,
+                                                                 file_names=[
+                                                                     "environment/environment/wants_to_draw_from_deck_cases.txt"]))
 @cython_wrap
 def test_wants_to_draw_from_deck(np.ndarray actions, bint expected):
-    assert CythonEnvironment.wants_to_draw_from_deck(actions) == expected
+    assert Environment.wants_to_draw_from_deck(actions) == expected
 
 @cython_wrap
-def test_update_score(CythonEnvironment test_env, Player test_player):
+def test_update_score(Environment test_env, Player test_player):
     score_limit = test_env.SCORE_LIMIT
     assert test_env.update_score(test_player, score_limit // 2) == ActionResult.WON_HAND
     assert test_env.update_score(test_player, score_limit) == ActionResult.WON_MATCH
@@ -89,7 +66,7 @@ def test_update_score(CythonEnvironment test_env, Player test_player):
                                                                        idfn_id_expected,
                                                                        file_names=["environment/deadwood/td_10.txt"]))
 @cython_wrap
-def test_score_gin(CythonEnvironment test_env, Player test_player, player_with_cards, np.ndarray cards_in_hand,
+def test_score_gin(Environment test_env, Player test_player, player_with_cards, np.ndarray cards_in_hand,
                    int deadwood):
     test_env.player_1 = test_player
     test_env.player_2 = player_with_cards(cards_in_hand)
@@ -97,6 +74,39 @@ def test_score_gin(CythonEnvironment test_env, Player test_player, player_with_c
     assert test_env.score_gin(test_player) == ActionResult.WON_MATCH
     test_player.score = test_env.SCORE_LIMIT - test_env.GIN_BONUS - deadwood - 1
     assert test_env.score_gin(test_player) == ActionResult.WON_HAND
+
+@cython_wrap
+def test_score_limit(Environment test_env):
+    cdef Environment other_test_env = Environment(base_agent_class()())
+    assert other_test_env.SCORE_LIMIT == test_env.SCORE_LIMIT
+    test_env.SCORE_LIMIT += 1
+    assert other_test_env.SCORE_LIMIT == test_env.SCORE_LIMIT
+    test_env.SCORE_LIMIT = 500
+    assert other_test_env.SCORE_LIMIT == test_env.SCORE_LIMIT
+    test_env.SCORE_LIMIT = 23
+    assert other_test_env.SCORE_LIMIT == test_env.SCORE_LIMIT
+
+@cython_wrap
+def test_gin_bonus(Environment test_env):
+    cdef Environment other_test_env = Environment(base_agent_class()())
+    assert other_test_env.GIN_BONUS == test_env.GIN_BONUS
+    test_env.GIN_BONUS += 1
+    assert other_test_env.GIN_BONUS == test_env.GIN_BONUS
+    test_env.GIN_BONUS = 500
+    assert other_test_env.GIN_BONUS == test_env.GIN_BONUS
+    test_env.GIN_BONUS = 23
+    assert other_test_env.GIN_BONUS == test_env.GIN_BONUS
+
+@cython_wrap
+def test_big_gin_bonus(Environment test_env):
+    cdef Environment other_test_env = Environment(base_agent_class()())
+    assert other_test_env.BIG_GIN_BONUS == test_env.BIG_GIN_BONUS
+    test_env.BIG_GIN_BONUS += 1
+    assert other_test_env.BIG_GIN_BONUS == test_env.BIG_GIN_BONUS
+    test_env.BIG_GIN_BONUS = 500
+    assert other_test_env.BIG_GIN_BONUS == test_env.BIG_GIN_BONUS
+    test_env.BIG_GIN_BONUS = 23
+    assert other_test_env.BIG_GIN_BONUS == test_env.BIG_GIN_BONUS
 
 ##TODO test setting class methods
 # TODO test discard pile resizing

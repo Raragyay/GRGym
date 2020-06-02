@@ -16,7 +16,7 @@ from .deadwood_counter cimport DeadwoodCounter
 from libc.stdint cimport int64_t
 
 @cython.final
-cdef class CythonEnvironment:
+cdef class Environment:
     def __init__(self, opponent_agent: BaseAgent):
         self.__player_1 = Player()
         self.__player_2 = Player()
@@ -78,19 +78,19 @@ cdef class CythonEnvironment:
     def run_draw(self, double[:] action, Player player):
         if len(self.deck) == 2:
             return ActionResult.DRAW
-        if CythonEnvironment.wants_to_draw_from_deck(action) or self.discard_pile_is_empty():
+        if Environment.wants_to_draw_from_deck(action) or self.discard_pile_is_empty():
             self.draw_from_deck(player)
         else:
             self.draw_from_discard(player)
         return 0
 
     def run_discard(self, np.ndarray action, Player player, is_player_1: bool) -> int:
-        if CythonEnvironment.wants_to_knock(action) and CythonEnvironment.is_gin(player):
+        if Environment.wants_to_knock(action) and Environment.is_gin(player):
             return self.score_big_gin(player)
         card_to_discard = self.get_card_to_discard(action, player)
         self.discard_card(player, card_to_discard)
-        if CythonEnvironment.wants_to_knock(action) and CythonEnvironment.can_knock(player):
-            if CythonEnvironment.is_gin(player):
+        if Environment.wants_to_knock(action) and Environment.can_knock(player):
+            if Environment.is_gin(player):
                 return self.score_gin(player)
             else:
                 score_delta = self.try_to_knock(player)
