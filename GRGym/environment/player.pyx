@@ -9,7 +9,7 @@ cdef class Player:
     def __init__(self):
         self.hand = Hand()
         self.__card_states = np.zeros(52, dtype=np.int8)
-        self.score = 0
+        self.__score = 0
 
     @property
     def card_states(self):
@@ -100,3 +100,9 @@ cdef class Player:
         return f'Player:\n' \
                f'{self.hand}' \
                f'Score: {self.score}'
+
+    property score:
+        def __get__(self):
+            return self.__score
+        def __set__(self, value):
+            self.__score = value

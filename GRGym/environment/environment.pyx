@@ -307,14 +307,6 @@ cdef class Environment:
     def player_2(self, new_player):
         self.__player_2 = <Player> new_player  # This is to fix problems converting between the normal
 
-    @property
-    def player_1(self):
-        return self.__player_1
-
-    @player_1.setter
-    def player_1(self, new_player):
-        self.__player_1 = <Player> new_player
-
     cdef int8_t pop_from_discard_pile(self):
         cdef int8_t to_return = self.__discard_pile[self.num_of_discard_cards - 1]
         self.num_of_discard_cards -= 1
@@ -342,6 +334,12 @@ cdef class Environment:
             return get_big_gin_bonus()
         def __set__(self, value):
             set_big_gin_bonus(value)
+
+    property player_1:
+        def __get__(self):
+            return self.__player_1
+        def __set__(self, value):
+            self.__player_1 = <Player> value
 
 cdef int64_t _SCORE_LIMIT[1]
 _SCORE_LIMIT[0] = 100
