@@ -2,7 +2,6 @@ include "cython_wrapper.pxi"
 import numpy as np
 cimport numpy as np
 import pytest
-from GRGym.agent import BaseAgent
 from GRGym.environment.environment cimport Environment
 from GRGym.environment.player cimport Player
 from GRGym.environment.action_result cimport ActionResult
@@ -74,39 +73,6 @@ def test_score_gin(Environment test_env, Player test_player, player_with_cards, 
     assert test_env.score_gin(test_player) == ActionResult.WON_MATCH
     test_player.score = test_env.SCORE_LIMIT - test_env.GIN_BONUS - deadwood - 1
     assert test_env.score_gin(test_player) == ActionResult.WON_HAND
-
-@cython_wrap
-def test_score_limit(Environment test_env):
-    cdef Environment other_test_env = Environment(base_agent_class()())
-    assert other_test_env.SCORE_LIMIT == test_env.SCORE_LIMIT
-    test_env.SCORE_LIMIT += 1
-    assert other_test_env.SCORE_LIMIT == test_env.SCORE_LIMIT
-    test_env.SCORE_LIMIT = 500
-    assert other_test_env.SCORE_LIMIT == test_env.SCORE_LIMIT
-    test_env.SCORE_LIMIT = 23
-    assert other_test_env.SCORE_LIMIT == test_env.SCORE_LIMIT
-
-@cython_wrap
-def test_gin_bonus(Environment test_env):
-    cdef Environment other_test_env = Environment(base_agent_class()())
-    assert other_test_env.GIN_BONUS == test_env.GIN_BONUS
-    test_env.GIN_BONUS += 1
-    assert other_test_env.GIN_BONUS == test_env.GIN_BONUS
-    test_env.GIN_BONUS = 500
-    assert other_test_env.GIN_BONUS == test_env.GIN_BONUS
-    test_env.GIN_BONUS = 23
-    assert other_test_env.GIN_BONUS == test_env.GIN_BONUS
-
-@cython_wrap
-def test_big_gin_bonus(Environment test_env):
-    cdef Environment other_test_env = Environment(base_agent_class()())
-    assert other_test_env.BIG_GIN_BONUS == test_env.BIG_GIN_BONUS
-    test_env.BIG_GIN_BONUS += 1
-    assert other_test_env.BIG_GIN_BONUS == test_env.BIG_GIN_BONUS
-    test_env.BIG_GIN_BONUS = 500
-    assert other_test_env.BIG_GIN_BONUS == test_env.BIG_GIN_BONUS
-    test_env.BIG_GIN_BONUS = 23
-    assert other_test_env.BIG_GIN_BONUS == test_env.BIG_GIN_BONUS
 
 ##TODO test setting class methods
 # TODO test discard pile resizing
