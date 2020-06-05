@@ -282,14 +282,6 @@ cdef class Environment:
         self.__deck = self.__deck[1:]
 
     @property
-    def deck(self):
-        return np.asarray(self.__deck, dtype=np.int8)
-
-    @deck.setter
-    def deck(self, new_deck):
-        self.__deck = new_deck.copy()
-
-    @property
     def discard_pile(self):
         return np.asarray(self.__discard_pile[0:self.num_of_discard_cards], dtype=np.int8)
 
@@ -298,14 +290,6 @@ cdef class Environment:
         self.__discard_pile = new_pile
         np.resize(self.discard_pile, (52,))
         self.num_of_discard_cards = len(new_pile)
-
-    @property
-    def player_2(self):
-        return self.__player_2
-
-    @player_2.setter
-    def player_2(self, new_player):
-        self.__player_2 = <Player> new_player  # This is to fix problems converting between the normal
 
     cdef int8_t pop_from_discard_pile(self):
         cdef int8_t to_return = self.__discard_pile[self.num_of_discard_cards - 1]
@@ -340,6 +324,18 @@ cdef class Environment:
             return self.__player_1
         def __set__(self, value):
             self.__player_1 = <Player> value
+
+    property player_2:
+        def __get__(self):
+            return self.__player_2
+        def __set__(self, value):
+            self.__player_2 = <Player> value
+
+    property deck:
+        def __get__(self):
+            return np.asarray(self.__deck, dtype=np.int8)
+        def __set__(self, value):
+            self.__deck = value
 
 cdef int64_t _SCORE_LIMIT[1]
 _SCORE_LIMIT[0] = 100

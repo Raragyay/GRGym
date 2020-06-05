@@ -235,3 +235,18 @@ def test_str_repr(Player test_player):
     repr_with_data = repr(test_player)
     test_player.score += 5
     assert repr_with_data != repr(test_player)
+
+@cython_wrap
+def test_score_property(Player test_player):
+    # Test __set__
+    test_player.score = 0
+    assert test_player.__score == 0
+    test_player.score = 5
+    assert test_player.__score == 5
+
+    # Test __get
+    test_player.__score = 10
+    assert test_player.score == 10
+    test_player.__score = 15
+    assert test_player.score == 15
+    assert test_player.score == test_player.__score
