@@ -74,5 +74,18 @@ def test_score_gin(Environment test_env, Player test_player, player_with_cards, 
     test_player.score = test_env.SCORE_LIMIT - test_env.GIN_BONUS - deadwood - 1
     assert test_env.score_gin(test_player) == ActionResult.WON_HAND
 
+@pytest.mark.parametrize("cards_in_hand,deadwood", retrieve_file_tests(retrieve_nonzero_indices, retrieve_int,
+                                                                       idfn_id_expected,
+                                                                       file_names=["environment/deadwood/td_10.txt"]))
+@cython_wrap
+def test_score_big_gin(Environment test_env, Player test_player, player_with_cards, np.ndarray cards_in_hand,
+                       int deadwood):
+    test_env.player_1 = test_player
+    test_env.player_2 = player_with_cards(cards_in_hand)
+    test_player.score = test_env.SCORE_LIMIT - test_env.BIG_GIN_BONUS - deadwood
+    assert test_env.score_big_gin(test_player) == ActionResult.WON_MATCH
+    test_player.score = test_env.SCORE_LIMIT - test_env.BIG_GIN_BONUS - deadwood - 1
+    assert test_env.score_big_gin(test_player) == ActionResult.WON_HAND
+
 ##TODO test setting class methods
 # TODO test discard pile resizing
