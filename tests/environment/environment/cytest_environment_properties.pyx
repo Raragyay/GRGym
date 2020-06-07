@@ -87,3 +87,27 @@ def test_deck(Environment test_env):
     test_env.deck = other_test_deck
     np.testing.assert_array_equal(test_env.deck, other_test_deck)
     np.testing.assert_array_equal(test_env.__deck, other_test_deck)
+
+@cython_wrap
+def test_discard_pile(Environment test_env):
+    cdef np.ndarray test_discard = np.arange(52, dtype=np.int8)
+    cdef np.ndarray other_test_discard = np.zeros(8, dtype=np.int8)
+    test_env.discard_pile = test_discard
+    assert len(test_env.discard_pile) == len(test_discard)
+    assert len(test_env.__discard_pile) == len(test_discard)
+    np.testing.assert_array_equal(test_env.discard_pile, test_discard)
+    test_env.discard_pile = other_test_discard
+    assert len(test_env.discard_pile) == len(other_test_discard)
+    assert len(test_env.__discard_pile) == 52
+    np.testing.assert_array_equal(test_env.discard_pile, other_test_discard)
+    other_test_discard[0] = 5
+    with pytest.raises(AssertionError):
+        np.testing.assert_array_equal(test_env.discard_pile, other_test_discard)
+
+    # Test Error checks
+    cdef np.ndarray wrong_dim_array = np.arange(4, dtype=np.int8).reshape(2, 2)
+    with pytest.raises(ValueError):
+        test_env.discard_pile = wrong_dim_array
+    cdef np.ndarray wrong_size_array = np.arange(53, dtype=np.int8)
+    with pytest.raises(ValueError):
+        test_env.discard_pile = wrong_size_array

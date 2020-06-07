@@ -281,16 +281,6 @@ cdef class Environment:
         self.add_to_discard_pile(self.deck[0])
         self.__deck = self.__deck[1:]
 
-    @property
-    def discard_pile(self):
-        return np.asarray(self.__discard_pile[0:self.num_of_discard_cards], dtype=np.int8)
-
-    @discard_pile.setter
-    def discard_pile(self, new_pile):
-        self.__discard_pile = new_pile
-        np.resize(self.discard_pile, (52,))
-        self.num_of_discard_cards = len(new_pile)
-
     cdef int8_t pop_from_discard_pile(self):
         cdef int8_t to_return = self.__discard_pile[self.num_of_discard_cards - 1]
         self.num_of_discard_cards -= 1
@@ -336,6 +326,24 @@ cdef class Environment:
             return np.asarray(self.__deck, dtype=np.int8)
         def __set__(self, value):
             self.__deck = value
+
+    property discard_pile:
+        """
+        Property discard_pile: \n
+        Setting the discard pile is done by value. 
+        """
+        def __get__(self):
+            return np.asarray(self.__discard_pile[0:self.num_of_discard_cards], dtype=np.int8)
+        def __set__(self, np.ndarray value):
+            if value.ndim != 1:
+                raise ValueError(f"The array provided has too many dimensions: {value.ndim}. Please reshape "
+                                 f"the array. ")
+            if value.size > 52:
+                raise ValueError(f"The array provided is too large. Please provide an array with 52 elements or less. ")
+            self.__discard_pile = np.resize(value, (52,))
+            self.num_of_discard_cards = len(value)
+
+#TODO: add size checks
 
 cdef int64_t _SCORE_LIMIT[1]
 _SCORE_LIMIT[0] = 100

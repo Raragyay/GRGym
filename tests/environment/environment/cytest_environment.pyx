@@ -87,5 +87,4 @@ def test_score_big_gin(Environment test_env, Player test_player, player_with_car
     test_player.score = test_env.SCORE_LIMIT - test_env.BIG_GIN_BONUS - deadwood - 1
     assert test_env.score_big_gin(test_player) == ActionResult.WON_HAND
 
-##TODO test setting class methods
 # TODO test discard pile resizing
