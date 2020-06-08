@@ -30,3 +30,5 @@ cdef class Environment:
     cdef void add_first_discard_card(self)
     cdef int8_t pop_from_discard_pile(self)
     cdef void add_to_discard_pile(self, int8_t new_card)
+    @staticmethod
+    cdef validate_card_array(np.ndarray card_array)

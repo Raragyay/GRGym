@@ -291,6 +291,20 @@ cdef class Environment:
         self.num_of_discard_cards += 1
         return
 
+    @staticmethod
+    cdef validate_card_array(np.ndarray card_array):
+        if card_array.ndim != 1:
+            raise ValueError(f"The array provided has too many dimensions: {card_array.ndim}. Please reshape "
+                             f"the array. \n"
+                             f"Array provided: {card_array}")
+        if card_array.size > 52:
+            raise ValueError(f"The array provided is too large. Please provide an array with 52 elements or less. \n"
+                             f"Array provided: {card_array}")
+        if np.any(card_array < 0) or np.any(card_array >= 52):
+            raise ValueError(f"The array provided has values that are not between [0,52). Please provide an array "
+                             f"with correct card ids. \n"
+                             f"Array provided: {card_array}")
+
     property SCORE_LIMIT:
         def __get__(self):
             return get_score_limit()
@@ -325,6 +339,7 @@ cdef class Environment:
         def __get__(self):
             return np.asarray(self.__deck, dtype=np.int8)
         def __set__(self, value):
+            Environment.validate_card_array(value)
             self.__deck = value
 
     property discard_pile:
@@ -335,15 +350,9 @@ cdef class Environment:
         def __get__(self):
             return np.asarray(self.__discard_pile[0:self.num_of_discard_cards], dtype=np.int8)
         def __set__(self, np.ndarray value):
-            if value.ndim != 1:
-                raise ValueError(f"The array provided has too many dimensions: {value.ndim}. Please reshape "
-                                 f"the array. ")
-            if value.size > 52:
-                raise ValueError(f"The array provided is too large. Please provide an array with 52 elements or less. ")
+            Environment.validate_card_array(value)
             self.__discard_pile = np.resize(value, (52,))
             self.num_of_discard_cards = len(value)
-
-#TODO: add size checks
 
 cdef int64_t _SCORE_LIMIT[1]
 _SCORE_LIMIT[0] = 100
