@@ -14,6 +14,8 @@ cdef class Environment:
         bint draw_phase
         Py_ssize_t num_of_discard_cards
 
+    cdef ActionResult score_big_gin(self, Player player)
+    cdef ActionResult score_gin(self, Player player)
     cdef ActionResult update_score(self, Player player, int64_t score_delta)
 
     @staticmethod
@@ -31,4 +33,4 @@ cdef class Environment:
     cdef int8_t pop_from_discard_pile(self)
     cdef void add_to_discard_pile(self, int8_t new_card)
     @staticmethod
-    cdef validate_card_array(np.ndarray card_array)
+    cdef void validate_card_array(np.ndarray card_array) except *

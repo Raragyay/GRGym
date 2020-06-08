@@ -87,4 +87,27 @@ def test_score_big_gin(Environment test_env, Player test_player, player_with_car
     test_player.score = test_env.SCORE_LIMIT - test_env.BIG_GIN_BONUS - deadwood - 1
     assert test_env.score_big_gin(test_player) == ActionResult.WON_HAND
 
-# TODO test discard pile resizing
+@cython_wrap
+def test_opponents(Environment test_env):
+    cdef Player player_1_1 = Player()
+    cdef Player player_1_2 = Player()
+    cdef Player player_2_1 = Player()
+    cdef Player player_2_2 = Player()
+
+    # Assert initial configuration is working
+    assert test_env.opponents(test_env.player_1) is test_env.player_2
+    assert test_env.opponents(test_env.player_2) is test_env.player_1
+
+    # Assert changing player 1 maintains opponent referencing
+    test_env.player_1 = player_1_1
+    assert test_env.opponents(player_1_1) is test_env.player_2
+    assert test_env.opponents(test_env.player_2) is player_1_1
+
+    test_env.player_2 = player_2_1
+    assert test_env.opponents(player_1_1) is player_2_1
+    assert test_env.opponents(player_2_1) is player_1_1
+
+    with pytest.raises(ValueError):
+        test_env.opponents(player_1_2)
+    with pytest.raises(ValueError):
+        test_env.opponents(player_2_2)

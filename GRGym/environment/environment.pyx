@@ -222,17 +222,17 @@ cdef class Environment:
         else:  # undercut
             return -25 - (knocking_player_deadwood - opponent_deadwood)
 
-    def score_big_gin(self, Player player) -> ActionResult:
-        score_delta = DeadwoodCounter(self.opponents(player).card_list()).deadwood() + get_big_gin_bonus()
+    cdef ActionResult score_big_gin(self, Player player):
+        cdef int64_t score_delta = DeadwoodCounter(self.opponents(player).card_list()).deadwood() + get_big_gin_bonus()
         return self.update_score(player, score_delta)
 
-    def score_gin(self, Player player):
-        score_delta = DeadwoodCounter(self.opponents(player).card_list()).deadwood() + get_gin_bonus()
+    cdef ActionResult score_gin(self, Player player):
+        cdef int64_t score_delta = DeadwoodCounter(self.opponents(player).card_list()).deadwood() + get_gin_bonus()
         return self.update_score(player, score_delta)
 
     cdef ActionResult update_score(self, Player player, int64_t score_delta):
         player.score += score_delta
-        if player.score >= get_score_limit():
+        if player.score >= self.SCORE_LIMIT:
             return ActionResult.WON_MATCH
         else:
             return ActionResult.WON_HAND
@@ -260,9 +260,9 @@ cdef class Environment:
         :return: The opponent player.
         """
         if player is self.__player_1:
-            return self.player_2
+            return self.__player_2
         elif player is self.__player_2:
-            return self.player_1
+            return self.__player_1
         else:
             raise ValueError('This player is not currently in the environment.')
 
@@ -275,10 +275,10 @@ cdef class Environment:
                f'{"Draw" if self.draw_phase else "Discard"} Phase\n'
 
     cdef bint discard_pile_is_empty(self):
-        return len(self.discard_pile) == 0
+        return self.num_of_discard_cards == 0
 
     cdef void add_first_discard_card(self):
-        self.add_to_discard_pile(self.deck[0])
+        self.add_to_discard_pile(self.__deck[0])
         self.__deck = self.__deck[1:]
 
     cdef int8_t pop_from_discard_pile(self):
@@ -292,7 +292,7 @@ cdef class Environment:
         return
 
     @staticmethod
-    cdef validate_card_array(np.ndarray card_array):
+    cdef void validate_card_array(np.ndarray card_array) except *:
         if card_array.ndim != 1:
             raise ValueError(f"The array provided has too many dimensions: {card_array.ndim}. Please reshape "
                              f"the array. \n"
@@ -352,7 +352,7 @@ cdef class Environment:
         def __set__(self, np.ndarray value):
             Environment.validate_card_array(value)
             self.__discard_pile = np.resize(value, (52,))
-            self.num_of_discard_cards = len(value)
+            self.num_of_discard_cards = value.size
 
 cdef int64_t _SCORE_LIMIT[1]
 _SCORE_LIMIT[0] = 100
