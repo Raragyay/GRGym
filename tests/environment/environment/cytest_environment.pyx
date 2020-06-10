@@ -111,3 +111,11 @@ def test_opponents(Environment test_env):
         test_env.opponents(player_1_2)
     with pytest.raises(ValueError):
         test_env.opponents(player_2_2)
+
+@cython_wrap
+def test_discard_pile_is_empty(Environment test_env):
+    for i in range(52):
+        test_env.discard_pile = np.arange(i, dtype=np.int8)
+        assert i == 0 or not test_env.discard_pile_is_empty()
+        test_env.discard_pile = np.zeros(i, dtype=np.int8)
+        assert i == 0 or not test_env.discard_pile_is_empty()
