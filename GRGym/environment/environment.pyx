@@ -1,3 +1,4 @@
+import ctypes
 import logging
 import typing
 from copy import deepcopy
@@ -13,21 +14,22 @@ from .player import Player
 from .run cimport Run
 from .set cimport Set
 from .deadwood_counter cimport DeadwoodCounter
+from .observation cimport Observation, ActionPhase, PlayerID
 from libc.stdint cimport int64_t
 
 @cython.final
 cdef class Environment:
-    def __init__(self, opponent_agent: BaseAgent):
+    def __init__(self):
         self.__player_1 = Player()
         self.__player_2 = Player()
-        self.opponent_agent = opponent_agent
         self.__deck = np.arange(52, dtype=np.int8)
         self.__discard_pile = np.empty(52, dtype=np.int8)
         self.num_of_discard_cards = 0
 
-        self.draw_phase = True  # Either draw phase or discard phase
+        self.current_phase = ActionPhase.DRAW  # Either draw phase or discard phase
+        self.current_player_id = PlayerID.ONE
 
-    def reset_hand(self) -> np.ndarray:
+    def reset(self) -> Observation:
         """
         Resets the environment in preparation for the next hand. Player scores are not reset.
 
@@ -43,69 +45,108 @@ cdef class Environment:
         self.draw_from_deck(self.player_1, 10)
         self.draw_from_deck(self.player_2, 10)
         self.add_first_discard_card()
-        self.draw_phase = True
+        self.current_phase = ActionPhase.DRAW
+        self.current_player_id = PlayerID.ONE
         return self.build_observations(self.player_1)
 
-    def step(self, np.ndarray action) -> Tuple[np.ndarray, int]:
+    def step(self, int64_t action) -> Tuple[np.ndarray, int]:
         # TODO FIRST CARD PRIVILEGE
         """
-        Step through one interaction with the environment.
+        Step through one interaction with the environment, given an action.
 
         :param action:
-        A 56 length vector. First 52 elements correspond to the 52 cards.
-        Next 2 elements correspond to draw from deck and draw from discard
-        Last 2 elements correspond to knock and not knock
+            An integer representing the action that is going to be taken.
+            For each ActionPhase:
+            DRAW: A boolean, with 0 representing drawing from discard, and 1 representing drawing from deck.
+            CALL_BEFORE_DISCARD: A boolean, with 0 representing calling, and 1 representing not calling
+            DISCARD: An integer ranging from [0, 52) representing the card ID that will be discarded
+            CALL_AFTER_DISCARD: Same as CALL_BEFORE_DISCARD.
 
         :return:
-        A tuple of results.
-        The first element is the new observation vector.
-        The second element is the reward.
-        If the player won the hand, this is set to 1. If they won the match, this is set to 2.
-        If they lost the hand, this is set to -1. If they lost the match, this is set to -2.
-        Otherwise, this is set to 0.
+            A tuple of results.
+            The first element is the new observation.
+            The second element is a boolean representing whether or not the game is finished.
+            The third element is the reward.
         """
         cdef:
-            ActionResult action_result
-        if self.draw_phase:
-            action_result = self.run_draw(action, self.player_1)
-        else:  # Discard phase
-            action_result = self.run_discard(action, self.player_1, is_player_1=True)
-        self.draw_phase = not self.draw_phase
-        if action_result != ActionResult.NO_CHANGE:
-            self.reset_hand()
-        return self.build_observations(self.player_1), action_result
+            bint done
+            int64_t reward
+            Player current_player = self.get_current_player()
+        if self.current_phase == ActionPhase.DRAW:
+            done, reward = self.run_draw(action, current_player)
+        elif self.current_phase == ActionPhase.CALL_BEFORE_DISCARD or self.current_phase == \
+                ActionPhase.CALL_AFTER_DISCARD:
+            done, reward = self.run_call(action, current_player)
+        elif self.current_phase == ActionPhase.DISCARD:
+            done, reward = self.run_discard(action, current_player)
+        else:
+            raise ValueError(f"Current phase {self.current_phase} is not in the enum.")
+        self.current_phase, self.current_player_id = self.advance_to_next_phase()
+        # if self.draw_phase:
+        #     action_result = self.run_draw(action, self.player_1)
+        # else:  # Discard phase
+        #     action_result = self.run_discard(action, self.player_1, is_player_1=True)
+        # self.draw_phase = not self.draw_phase
+        # if action_result != ActionResult.NO_CHANGE:
+        #     self.reset_hand()
+        # print(self)
+        return self.build_observations(self.get_current_player()), done, reward
 
-    def run_draw(self, double[:] action, Player player):
+    def run_draw(self, int64_t wants_to_draw_from_deck, Player player) -> Tuple[bool, int]:
+        # According to gin rummy rules, if there are only two cards left in the deck, it is a draw.
         if len(self.deck) == 2:
-            return ActionResult.DRAW
-        if Environment.wants_to_draw_from_deck(action) or self.discard_pile_is_empty():
+            return True, 0  # Game is done, player did not gain any points
+
+        # Ensure a boolean was passed in
+        assert wants_to_draw_from_deck == 0 or wants_to_draw_from_deck == 1
+        if wants_to_draw_from_deck:
             self.draw_from_deck(player)
         else:
             self.draw_from_discard(player)
-        return 0
+        return False, 0  # Game is not finished, player did not gain any points
 
-    def run_discard(self, np.ndarray action, Player player, is_player_1: bool) -> int:
-        if Environment.wants_to_knock(action) and Environment.is_gin(player):
-            return self.score_big_gin(player)
-        card_to_discard = self.get_card_to_discard(action, player)
-        self.discard_card(player, card_to_discard)
-        if Environment.wants_to_knock(action) and Environment.can_knock(player):
-            if Environment.is_gin(player):
-                return self.score_gin(player)
-            else:
-                score_delta = self.try_to_knock(player)
-                if score_delta > 0:
-                    return self.update_score(player, score_delta)
-                else:
-                    # Apply negative to return  relative to current player
-                    return -self.update_score(self.opponents(player), -score_delta)
-        if not is_player_1:
-            return 0  # Avoid player 2 recursing back into player 1, want to only recurse once
-        # Run player 2 draw and discard actions
-        opponent_draw_action = self.opponent_agent.act(self.build_observations(self.player_2))
-        self.run_draw(opponent_draw_action, self.player_2)
-        opponent_discard_action = self.opponent_agent.act(self.build_observations(self.player_2))
-        return self.run_discard(opponent_discard_action, self.player_2, False)
+    def run_call(self, int64_t wants_to_call, Player player)-> Tuple[bool, int]:
+        cdef int64_t score_delta
+        assert wants_to_call == 0 or wants_to_call == 1
+        if self.current_phase == ActionPhase.CALL_BEFORE_DISCARD:
+            if wants_to_call and Environment.is_gin(player):
+                return True, self.get_opponent_deadwood(player) + self.BIG_GIN_BONUS
+        elif self.current_phase == ActionPhase.CALL_AFTER_DISCARD:
+            if wants_to_call:
+                if Environment.is_gin(player):
+                    return True, self.get_opponent_deadwood(player) + self.GIN_BONUS
+                elif Environment.can_knock(player):
+                    score_delta = self.try_to_knock(player)
+                    return True, score_delta
+        else:
+            raise ValueError(f"Current ActionPhase {self.current_phase} is not a valid action phase for calling. ")
+
+        return False, 0
+
+    def run_discard(self, int64_t card_to_discard, Player player) -> Tuple[bool, int]:
+        self.discard_card(player,card_to_discard)
+        return False, 0
+        # if Environment.wants_to_knock(action) and Environment.is_gin(player):
+        #     return self.score_big_gin(player)
+        # card_to_discard = self.get_card_to_discard(action, player)
+        # self.discard_card(player, card_to_discard)
+        # if Environment.wants_to_knock(action) and Environment.can_knock(player):
+        #     if Environment.is_gin(player):
+        #         return self.score_gin(player)
+        #     else:
+        #         score_delta = self.try_to_knock(player)
+        #         if score_delta > 0:
+        #             return self.update_score(player, score_delta)
+        #         else:
+        #             # Apply negative to return relative to current player
+        #             return -self.update_score(self.opponents(player), -score_delta)
+        # if not is_player_1:
+        #     return 0  # Avoid player 2 recursing back into player 1, want to only recurse once
+        # # Run player 2 draw and discard actions
+        # opponent_draw_action = self.opponent_agent.act(self.build_observations(self.player_2))
+        # self.run_draw(opponent_draw_action, self.player_2)
+        # opponent_discard_action = self.opponent_agent.act(self.build_observations(self.player_2))
+        # return self.run_discard(opponent_discard_action, self.player_2, False)
 
     @staticmethod
     def get_card_to_discard(np.ndarray action, Player player):
@@ -135,29 +176,21 @@ cdef class Environment:
         player.add_card_from_discard(drawn_card, new_top_discard)
         self.opponents(player).report_opponent_drew_from_discard(drawn_card, new_top_discard)
 
-    def build_observations(self, Player player) -> np.ndarray:
+    def build_observations(self, Player player) -> Observation:
         """
-        Builds observation array.
-        52 elements for card_state
-        1 element for current player score
-        1 element for opponent score
-        1 element for number of cards still left in deck
-        1 element for whether or not the player is drawing
-        1 element for whether or not the player is discarding
-        Total of 57
+        Returns the observation object for the given player.
         :param player:
         :return:
         """
-        observation: np.ndarray = np.empty(57, np.int8)
-        observation[0:52] = player.card_states
-        observation[52] = player.score
-        observation[53] = self.opponents(player).score
-        observation[54] = len(self.deck)
-        observation[55] = self.draw_phase
-        observation[56] = not self.draw_phase
+        cdef Observation observation = Observation()
+        observation.__player_id = self.current_player_id
+        observation.card_observations = player.card_states
+        observation.action_phase = self.current_phase
+        observation.deck_size = len(self.deck)
         return observation
 
     def discard_card(self, Player player, card_to_discard: int):
+        assert player.has_card(card_to_discard), f"Player does not have the card {card_to_discard}"
         previous_top = player.NO_CARD if self.discard_pile_is_empty() else self.discard_pile[-1]
         self.add_to_discard_pile(card_to_discard)
         player.discard_card(card_to_discard, previous_top)
@@ -230,6 +263,12 @@ cdef class Environment:
         cdef int64_t score_delta = DeadwoodCounter(self.opponents(player).card_list()).deadwood() + get_gin_bonus()
         return self.update_score(player, score_delta)
 
+    cdef int64_t get_deadwood(self, Player player):
+        return DeadwoodCounter(player.card_list()).deadwood()
+
+    cdef int64_t get_opponent_deadwood(self, Player player):
+        return self.get_deadwood(self.opponents(player))
+
     cdef ActionResult update_score(self, Player player, int64_t score_delta):
         player.score += score_delta
         if player.score >= self.SCORE_LIMIT:
@@ -253,6 +292,14 @@ cdef class Environment:
     cdef bint can_knock(Player player):
         return DeadwoodCounter(player.card_list()).deadwood() <= 10
 
+    cdef Player get_current_player(self):
+        if self.current_player_id == PlayerID.ONE:
+            return self.player_1
+        elif self.current_player_id == PlayerID.TWO:
+            return self.player_2
+        else:
+            raise ValueError(f"Current player ID {self.current_player_id} is not part of the PlayerID Enum.")
+
     cdef Player opponents(self, Player player):
         """
         Opponents is implemented as a function instead of a dictionary to allow for swapping of players.
@@ -266,13 +313,31 @@ cdef class Environment:
         else:
             raise ValueError('This player is not currently in the environment.')
 
+    cdef PlayerID next_player_id(self):
+        if self.current_player_id == PlayerID.ONE:
+            return PlayerID.TWO
+        elif self.current_player_id == PlayerID.TWO:
+            return PlayerID.ONE
+        else:
+            raise ValueError(f"Current player ID {self.current_player_id} is not part of the PlayerID Enum.")
+
+    cdef (ActionPhase, PlayerID) advance_to_next_phase(self):
+        if self.current_phase == ActionPhase.DRAW:
+            return ActionPhase.CALL_BEFORE_DISCARD, self.current_player_id
+        elif self.current_phase == ActionPhase.CALL_BEFORE_DISCARD:
+            return ActionPhase.DISCARD, self.current_player_id
+        elif self.current_phase == ActionPhase.DISCARD:
+            return ActionPhase.CALL_AFTER_DISCARD, self.current_player_id
+        else:
+            return ActionPhase.DRAW, self.next_player_id()
+
     def __repr__(self):
         return f'{self.player_1.__repr__()}\n' \
                f'{self.player_2.__repr__()}\n' \
-               f'Opponent Agent: {self.opponent_agent.__class__}\n' \
                f'Deck: {self.deck}\n' \
                f'Discard: {self.discard_pile}\n' \
-               f'{"Draw" if self.draw_phase else "Discard"} Phase\n'
+               f'Current Phase:{self.current_phase}\n' \
+               f'Current Player: {self.current_player_id}'
 
     cdef bint discard_pile_is_empty(self):
         return self.num_of_discard_cards == 0

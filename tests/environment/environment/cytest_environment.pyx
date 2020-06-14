@@ -103,10 +103,12 @@ def test_opponents(Environment test_env):
     assert test_env.opponents(player_1_1) is test_env.player_2
     assert test_env.opponents(test_env.player_2) is player_1_1
 
+    # Assert changing player 2 maintains opponent referencing
     test_env.player_2 = player_2_1
     assert test_env.opponents(player_1_1) is player_2_1
     assert test_env.opponents(player_2_1) is player_1_1
 
+    # Ensure that getting the opponent of a player that isn't recorded in the environment raises an error
     with pytest.raises(ValueError):
         test_env.opponents(player_1_2)
     with pytest.raises(ValueError):
