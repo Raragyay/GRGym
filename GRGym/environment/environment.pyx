@@ -279,6 +279,8 @@ cdef class Environment:
 
     cdef void add_first_discard_card(self):
         self.add_to_discard_pile(self.__deck[0])
+        self.opponents(self.player_1).report_opponent_discarded(self.__deck[0], self.player_1.NO_CARD)
+        self.opponents(self.player_2).report_opponent_discarded(self.__deck[0], self.player_2.NO_CARD)
         self.__deck = self.__deck[1:]
 
     cdef int8_t pop_from_discard_pile(self):
