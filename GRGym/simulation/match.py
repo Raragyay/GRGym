@@ -1,8 +1,8 @@
 import numpy as np
 
-from agent import BaseAgent
+from GRGym.agent import BaseAgent
 from GRGym.environment import Environment
-from GRGym.environment.observation import ActionPhase
+from GRGym.environment.observation import ActionPhase, PlayerID
 
 
 class Match:
@@ -26,7 +26,8 @@ class Match:
                 done = False
                 reward = 0
                 while not done:
-                    action_array = self.get_agent_to_process(observation.player_id).act(observation.card_observations)
+                    player_id = observation.player_id
+                    action_array = self.get_agent_to_process(player_id).act(observation.card_observations)
                     action: int = None
                     action_phase = observation.action_phase
                     if action_phase == ActionPhase.DRAW:

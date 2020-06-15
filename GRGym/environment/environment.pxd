@@ -1,5 +1,5 @@
+from .observation cimport Observation
 from .player cimport Player
-from .player import Player
 from libc.stdint cimport int8_t, int64_t
 from .action_result cimport ActionResult
 from .observation cimport ActionPhase, PlayerID
@@ -15,16 +15,20 @@ cdef class Environment:
         PlayerID current_player_id
         Py_ssize_t num_of_discard_cards
 
-    cdef ActionResult score_big_gin(self, Player player)
-    cdef ActionResult score_gin(self, Player player)
-    cdef int64_t get_deadwood(self, Player player)
-    cdef int64_t get_opponent_deadwood(self, Player player)
-    cdef ActionResult update_score(self, Player player, int64_t score_delta)
+    cpdef step(self, int64_t action)
+    cdef (bint, int64_t) run_draw(self, int64_t wants_to_draw_from_deck, Player player)
+    cdef (bint, int64_t) run_call(self, int64_t wants_to_call, Player player)
+    cdef (bint, int64_t) run_discard(self, int64_t card_to_discard, Player player)
+
+    cdef Observation build_observations(self, Player player)
+
+    cdef void discard_card(self, Player player, card_to_discard: int) except *
+    cdef int64_t try_to_knock(self, Player player)
 
     @staticmethod
-    cdef bint wants_to_draw_from_deck(double[:] action)
-    @staticmethod
-    cdef bint wants_to_knock(double[:] action)
+    cdef int64_t get_deadwood(Player player)
+    cdef int64_t get_opponent_deadwood(self, Player player)
+
     @staticmethod
     cdef bint is_gin(Player player)
     @staticmethod
