@@ -50,6 +50,8 @@ class Match:
                         p2_score += reward
                     else:
                         p1_score -= reward  # Add the positive, which means inverting the negative
+                self.agent_1.reset()
+                self.agent_2.reset()
                 if p1_score >= self.SCORE_LIMIT or p2_score >= self.SCORE_LIMIT:
                     print(f"There were {draw_count} draws.")
                     break
