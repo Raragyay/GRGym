@@ -36,57 +36,6 @@ def test_can_knock(player_with_cards, np.ndarray cards_in_hand, bint expected):
 def test_is_gin(player_with_cards, np.ndarray cards_in_hand, bint expected):
     assert Environment.is_gin(player_with_cards(cards_in_hand)) == expected
 
-@pytest.mark.parametrize("actions,expected", retrieve_file_tests(retrieve_float_vector, retrieve_boolean,
-                                                                 idfn_id_expected,
-                                                                 file_names=[
-                                                                     "environment/environment/wants_to_knock_cases.txt"]))
-@cython_wrap
-def test_wants_to_knock(np.ndarray actions, bint expected):
-    assert Environment.wants_to_knock(actions) == expected
-
-@pytest.mark.parametrize("actions,expected", retrieve_file_tests(retrieve_float_vector, retrieve_boolean,
-                                                                 idfn_id_expected,
-                                                                 file_names=[
-                                                                     "environment/environment/wants_to_draw_from_deck_cases.txt"]))
-@cython_wrap
-def test_wants_to_draw_from_deck(np.ndarray actions, bint expected):
-    assert Environment.wants_to_draw_from_deck(actions) == expected
-
-@cython_wrap
-def test_update_score(Environment test_env, Player test_player):
-    score_limit = test_env.SCORE_LIMIT
-    assert test_env.update_score(test_player, score_limit // 2) == ActionResult.WON_HAND
-    assert test_env.update_score(test_player, score_limit) == ActionResult.WON_MATCH
-    assert test_player.score >= score_limit
-    test_player.score = 0
-    assert test_env.update_score(test_player, score_limit == ActionResult.WON_MATCH)
-
-@pytest.mark.parametrize("cards_in_hand,deadwood", retrieve_file_tests(retrieve_nonzero_indices, retrieve_int,
-                                                                       idfn_id_expected,
-                                                                       file_names=["environment/deadwood/td_10.txt"]))
-@cython_wrap
-def test_score_gin(Environment test_env, Player test_player, player_with_cards, np.ndarray cards_in_hand,
-                   int deadwood):
-    test_env.player_1 = test_player
-    test_env.player_2 = player_with_cards(cards_in_hand)
-    test_player.score = test_env.SCORE_LIMIT - test_env.GIN_BONUS - deadwood
-    assert test_env.score_gin(test_player) == ActionResult.WON_MATCH
-    test_player.score = test_env.SCORE_LIMIT - test_env.GIN_BONUS - deadwood - 1
-    assert test_env.score_gin(test_player) == ActionResult.WON_HAND
-
-@pytest.mark.parametrize("cards_in_hand,deadwood", retrieve_file_tests(retrieve_nonzero_indices, retrieve_int,
-                                                                       idfn_id_expected,
-                                                                       file_names=["environment/deadwood/td_10.txt"]))
-@cython_wrap
-def test_score_big_gin(Environment test_env, Player test_player, player_with_cards, np.ndarray cards_in_hand,
-                       int deadwood):
-    test_env.player_1 = test_player
-    test_env.player_2 = player_with_cards(cards_in_hand)
-    test_player.score = test_env.SCORE_LIMIT - test_env.BIG_GIN_BONUS - deadwood
-    assert test_env.score_big_gin(test_player) == ActionResult.WON_MATCH
-    test_player.score = test_env.SCORE_LIMIT - test_env.BIG_GIN_BONUS - deadwood - 1
-    assert test_env.score_big_gin(test_player) == ActionResult.WON_HAND
-
 @cython_wrap
 def test_opponents(Environment test_env):
     cdef Player player_1_1 = Player()
@@ -121,3 +70,12 @@ def test_discard_pile_is_empty(Environment test_env):
         assert i == 0 or not test_env.discard_pile_is_empty()
         test_env.discard_pile = np.zeros(i, dtype=np.int8)
         assert i == 0 or not test_env.discard_pile_is_empty()
+
+@cython_wrap
+def test_repr(Environment test_env):
+    assert repr(test_env)  # make sure no errors
+
+@cython_wrap
+def test_get_opponent_deadwood(Environment test_env):
+    assert Environment.get_deadwood(test_env.player_1) == test_env.get_opponent_deadwood(test_env.player_2)
+    assert test_env.get_opponent_deadwood(test_env.player_1) == Environment.get_deadwood(test_env.player_2)

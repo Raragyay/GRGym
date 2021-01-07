@@ -20,7 +20,7 @@ def base_player_class():
 
 @pytest.fixture
 def test_env():
-    return base_env_class()(base_agent_class()())
+    return base_env_class()()
 
 
 @pytest.fixture

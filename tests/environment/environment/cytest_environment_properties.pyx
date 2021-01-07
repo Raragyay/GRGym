@@ -6,8 +6,8 @@ from GRGym.environment.player cimport Player
 from GRGym.environment.environment cimport Environment
 
 @cython_wrap
-def test_score_limit(Environment test_env, test_agent):
-    cdef Environment other_test_env = Environment(test_agent)
+def test_score_limit(Environment test_env):
+    cdef Environment other_test_env = Environment()
     assert other_test_env.SCORE_LIMIT == test_env.SCORE_LIMIT
     test_env.SCORE_LIMIT += 1
     assert other_test_env.SCORE_LIMIT == test_env.SCORE_LIMIT
@@ -17,8 +17,8 @@ def test_score_limit(Environment test_env, test_agent):
     assert other_test_env.SCORE_LIMIT == test_env.SCORE_LIMIT
 
 @cython_wrap
-def test_gin_bonus(Environment test_env, test_agent):
-    cdef Environment other_test_env = Environment(test_agent)
+def test_gin_bonus(Environment test_env):
+    cdef Environment other_test_env = Environment()
     assert other_test_env.GIN_BONUS == test_env.GIN_BONUS
     test_env.GIN_BONUS += 1
     assert other_test_env.GIN_BONUS == test_env.GIN_BONUS
@@ -28,8 +28,8 @@ def test_gin_bonus(Environment test_env, test_agent):
     assert other_test_env.GIN_BONUS == test_env.GIN_BONUS
 
 @cython_wrap
-def test_big_gin_bonus(Environment test_env, test_agent):
-    cdef Environment other_test_env = Environment(test_agent)
+def test_big_gin_bonus(Environment test_env):
+    cdef Environment other_test_env = Environment()
     assert other_test_env.BIG_GIN_BONUS == test_env.BIG_GIN_BONUS
     test_env.BIG_GIN_BONUS += 1
     assert other_test_env.BIG_GIN_BONUS == test_env.BIG_GIN_BONUS

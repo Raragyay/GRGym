@@ -22,6 +22,8 @@ cdef class Environment:
 
     cdef Observation build_observations(self, Player player)
 
+    cdef void draw_from_deck(self, Player player, int64_t num_of_cards = *) except *
+    cdef void draw_from_discard(self, Player player) except *
     cdef void discard_card(self, Player player, card_to_discard: int) except *
     cdef int64_t try_to_knock(self, Player player)
 

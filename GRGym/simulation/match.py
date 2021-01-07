@@ -1,3 +1,6 @@
+import time
+from timeit import default_timer
+
 import numpy as np
 
 from GRGym.agent import BaseAgent

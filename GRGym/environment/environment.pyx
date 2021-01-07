@@ -102,11 +102,11 @@ cdef class Environment:
         assert wants_to_call == 0 or wants_to_call == 1
         if self.current_phase == ActionPhase.CALL_BEFORE_DISCARD:
             if wants_to_call and Environment.is_gin(player):
-                return True, self.get_opponent_deadwood(player) + self.BIG_GIN_BONUS
+                return True, self.get_opponent_deadwood(player) + get_big_gin_bonus()
         elif self.current_phase == ActionPhase.CALL_AFTER_DISCARD:
             if wants_to_call:
                 if Environment.is_gin(player):
-                    return True, self.get_opponent_deadwood(player) + self.GIN_BONUS
+                    return True, self.get_opponent_deadwood(player) + get_gin_bonus()
                 elif Environment.can_knock(player):
                     score_delta = self.try_to_knock(player)
                     return True, score_delta
@@ -118,20 +118,6 @@ cdef class Environment:
     cdef (bint, int64_t) run_discard(self, int64_t card_to_discard, Player player):
         self.discard_card(player, card_to_discard)
         return False, 0
-
-    def draw_from_deck(self, Player player, num_of_cards: int = 1):
-        assert self.opponents(player)
-        assert len(self.deck) >= num_of_cards
-        for card_val in self.deck[:num_of_cards]:
-            player.add_card_from_deck(card_val)
-        self.deck = self.deck[num_of_cards:]
-        return
-
-    def draw_from_discard(self, Player player):
-        cdef int8_t drawn_card = self.pop_from_discard_pile()
-        cdef int8_t new_top_discard = player.NO_CARD if self.discard_pile_is_empty() else self.discard_pile[-1]
-        player.add_card_from_discard(drawn_card, new_top_discard)
-        self.opponents(player).report_opponent_drew_from_discard(drawn_card, new_top_discard)
 
     cdef Observation build_observations(self, Player player):
         """
@@ -145,6 +131,20 @@ cdef class Environment:
         observation.action_phase = self.current_phase
         observation.deck_size = len(self.deck)
         return observation
+
+    cdef void draw_from_deck(self, Player player, int64_t num_of_cards = 1) except *:
+        assert self.opponents(player)
+        assert len(self.deck) >= num_of_cards
+        for card_val in self.deck[:num_of_cards]:
+            player.add_card_from_deck(card_val)
+        self.deck = self.deck[num_of_cards:]
+        return
+
+    cdef void draw_from_discard(self, Player player) except *:
+        cdef int8_t drawn_card = self.pop_from_discard_pile()
+        cdef int8_t new_top_discard = player.NO_CARD if self.discard_pile_is_empty() else self.discard_pile[-1]
+        player.add_card_from_discard(drawn_card, new_top_discard)
+        self.opponents(player).report_opponent_drew_from_discard(drawn_card, new_top_discard)
 
     cdef void discard_card(self, Player player, card_to_discard: int) except *:
         assert player.has_card(card_to_discard), f"Player does not have the card {card_to_discard}"

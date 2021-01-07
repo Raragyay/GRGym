@@ -33,6 +33,7 @@ compiler_directives = {
 }
 # Only add line tracing directive if distutils tracing macro is specified from CLI.
 if 'CYTHON_TRACE_NOGIL' in sys.argv:
+    print('true')
     compiler_directives['linetrace'] = True
 
 setup(
